@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Answers, AssessmentResult, Question } from '../lib/types'
 import { setting } from '../content'
+import { LeadForm } from '../components/LeadForm'
+import { buildLeadPayload, isLeadCaptureEnabled, submitLead } from '../lib/leads'
 import { AnswerChipStrip } from '../components/AnswerChipStrip'
 import { RecommendationPanel } from '../components/RecommendationPanel'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -12,6 +14,8 @@ interface ResultsScreenProps {
   answers: Answers
   onRestart: () => void
 }
+
+const leadCaptureEnabled = isLeadCaptureEnabled()
 
 const KNOWN_SECTIONS = ['title', 'situation', 'strengths', 'gap', 'risk', 'next30', 'next90']
 
@@ -152,12 +156,17 @@ export function ResultsScreen({
       </div>
 
       {/* Utility actions — visually separated from the diagnostic content above */}
-      <p className="mt-10 text-center text-base leading-7 text-slate-600">
-        Thank you for sharing your L&amp;D priorities with us. Your responses
-        have been captured successfully.
-      </p>
+      {leadCaptureEnabled && (
+        <div className="mt-12">
+          <LeadForm
+            onSubmit={(contact) =>
+              submitLead(buildLeadPayload(contact, answers, result, questions))
+            }
+          />
+        </div>
+      )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-slate-200 pt-7">
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 border-t border-slate-200 pt-7">
         <button type="button" onClick={handleCopy} className="btn-secondary px-5 py-2.5">
           {copied && (
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-q4" aria-hidden="true">
@@ -181,10 +190,9 @@ export function ResultsScreen({
         </button>
       </div>
 
-      <div className="mt-6 flex flex-col gap-2 border-t border-slate-200 pt-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-        <span>L&amp;D Assessment</span>
-        <span>Response received</span>
-      </div>
+      <p className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-400">
+        {setting('privacy_note')}
+      </p>
     </motion.div>
   )
 }

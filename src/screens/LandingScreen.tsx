@@ -245,6 +245,9 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
               {setting('estimated_time', 'About 2 minutes')} &middot; Personalized
               assessment
             </p>
+            <p className="mx-auto mt-3 max-w-xl text-xs leading-5 text-white/50">
+              {setting('privacy_note')}
+            </p>
           </div>
         </FadeIn>
       </div>
