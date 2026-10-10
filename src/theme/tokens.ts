@@ -1,4 +1,5 @@
 import type { QuestionCode } from '../lib/types'
+import { content } from '../content'
 
 interface AccentTokens {
   accent: string
@@ -10,12 +11,12 @@ interface AccentTokens {
 }
 
 /**
- * Per-question accent system, matching the color coding already used by the
+ * Accent palette, matching the color coding already used by the
  * current site's result summary cards (extracted from its rendered output).
  * Ties the wizard's answer options and the results screen chips together.
  */
-export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
-  Q1: {
+const ACCENT_PALETTE: AccentTokens[] = [
+  {
     accent: '#12859B',
     tint: '#EAF6F8',
     text: 'text-q1',
@@ -23,7 +24,7 @@ export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
     border: 'border-q1',
     ring: 'ring-q1',
   },
-  Q2: {
+  {
     accent: '#D98B16',
     tint: '#FFF6E7',
     text: 'text-q2',
@@ -31,7 +32,7 @@ export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
     border: 'border-q2',
     ring: 'ring-q2',
   },
-  Q3: {
+  {
     accent: '#C83252',
     tint: '#FFF0F3',
     text: 'text-q3',
@@ -39,7 +40,7 @@ export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
     border: 'border-q3',
     ring: 'ring-q3',
   },
-  Q4: {
+  {
     accent: '#168666',
     tint: '#EDF8F4',
     text: 'text-q4',
@@ -47,7 +48,7 @@ export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
     border: 'border-q4',
     ring: 'ring-q4',
   },
-  Q5: {
+  {
     accent: '#205A9E',
     tint: '#EEF3FA',
     text: 'text-q5',
@@ -55,4 +56,13 @@ export const QUESTION_ACCENTS: Record<QuestionCode, AccentTokens> = {
     border: 'border-q5',
     ring: 'ring-q5',
   },
+]
+
+/**
+ * Questions take accents from the palette by their position in the content
+ * sheet, cycling if there are more questions than colors.
+ */
+export function questionAccent(code: QuestionCode): AccentTokens {
+  const index = content.questions.findIndex((q) => q.code === code)
+  return ACCENT_PALETTE[Math.max(index, 0) % ACCENT_PALETTE.length]
 }

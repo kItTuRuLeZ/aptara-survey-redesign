@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "content": "node scripts/build-content.mjs",
+    "content:preview": "node scripts/build-content.mjs --include-drafts"
   },
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.80",

@@ -12,20 +12,19 @@ import {
   savePersistedState,
   PERSISTENCE_SCHEMA_VERSION,
 } from './lib/persistence'
-import type { AnswerCode, Question, QuestionCode, SubmissionResult } from './lib/types'
-import { matrixSample } from './fixtures'
+import type { AnswerCode, Answers, AssessmentResult, Question, QuestionCode } from './lib/types'
+import { content } from './content'
+import { composeResult } from './lib/composeResult'
 
 type Screen = 'landing' | 'question' | 'processing' | 'results'
-
-const QUESTION_ORDER: QuestionCode[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']
 
 function App() {
   const [screen, setScreen] = useState<Screen>('landing')
   const [questions, setQuestions] = useState<Question[]>([])
   const [questionsError, setQuestionsError] = useState('')
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<Partial<Record<QuestionCode, AnswerCode>>>({})
-  const [result, setResult] = useState<SubmissionResult | null>(null)
+  const [answers, setAnswers] = useState<Answers>({})
+  const [result, setResult] = useState<AssessmentResult | null>(null)
   const [submitError, setSubmitError] = useState('')
   const [isNavigating, setIsNavigating] = useState(false)
 
@@ -44,7 +43,7 @@ function App() {
   // or a closed/reopened tab, once the question set has loaded.
   useEffect(() => {
     if (mockKey || questions.length === 0) return
-    const saved = loadPersistedState()
+    const saved = loadPersistedState(questions)
     if (!saved || Object.keys(saved.answers).length === 0) return
     setAnswers(saved.answers)
     setCurrentIndex(saved.currentIndex)
@@ -61,20 +60,19 @@ function App() {
     })
   }, [screen, currentIndex, answers])
 
-  // Dev shortcut: ?mock=A-B-B-A-A jumps straight to the results screen using
-  // a pulled fixture, for iterating on the results layout without spamming
-  // the live API.
+  // Shortcut: ?mock=A-B-B-A-A jumps straight to the result for those answers
+  // (one code per question, in order), for reviewing result content quickly.
   useEffect(() => {
     if (!mockKey || questions.length === 0) return
-    const fixture = matrixSample.find((r) => r.combination_key === mockKey)
-    if (!fixture) return
-    const codes = mockKey.split('-') as AnswerCode[]
-    const mockAnswers: Partial<Record<QuestionCode, AnswerCode>> = {}
-    QUESTION_ORDER.forEach((q, i) => {
-      mockAnswers[q] = codes[i]
-    })
+    const codes = mockKey.split('-')
+    if (codes.length !== questions.length) return
+    const mockAnswers: Answers = {}
+    for (const [i, q] of questions.entries()) {
+      if (!q.answers.some((a) => a.code === codes[i])) return
+      mockAnswers[q.code] = codes[i]
+    }
     setAnswers(mockAnswers)
-    setResult(fixture)
+    setResult(composeResult(content, mockAnswers))
     setScreen('results')
   }, [mockKey, questions])
 
@@ -101,13 +99,8 @@ function App() {
     setIsNavigating(true)
     setScreen('processing')
     setSubmitError('')
-    const payload = QUESTION_ORDER.filter((q) => answers[q]).map((q) => ({
-      question: q,
-      answer: answers[q]!,
-    }))
-
     const [res] = await Promise.all([
-      submitAssessment(payload),
+      submitAssessment(answers),
       new Promise((resolve) => setTimeout(resolve, 700)),
     ])
       .catch((err) => {

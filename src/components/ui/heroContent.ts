@@ -1,3 +1,5 @@
+import { content, setting } from '../../content'
+
 export interface HeroChapter {
   title: string
   lines: string[]
@@ -7,7 +9,11 @@ export interface HeroChapter {
  * Shared between the shader hero and its static fallback so the
  * "5 questions / 2 minutes / personalized" stat row only lives in one place.
  */
-export const HERO_STATS = ['5 questions', 'About 2 minutes', 'Personalized result']
+export const HERO_STATS = [
+  `${content.questions.length} questions`,
+  setting('estimated_time', 'About 2 minutes'),
+  'Personalized result',
+]
 
 /**
  * Shared between the 3D hero (horizon-hero-section.tsx) and the static

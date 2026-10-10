@@ -1,0 +1,4 @@
+"Optional overrides for specific combinations. 'When' uses Q-code=answer pairs joined by AND, e.g. 'Q1=A AND Q4=A'. Higher Priority wins when two Replace rules hit the same section. Example rows are Draft, so they are not published.",,,,,,,
+Rule ID,When (all must match),Section,Mode,Text,Priority,Status,Why this rule exists
+R001,Q1=A AND Q4=A,risk,Replace,"As a one-person function building from scratch, every new request competes with the foundations you're trying to lay. Without a repeatable way to produce content, growth will outpace your capacity.",10,Draft,"Example: solo + early stage is a common, distinct situation."
+R002,Q4=E AND Q5=C,next90,Add after,"Since you already rely on external vendors, consolidating them under one accountable partner is the fastest route there.",5,Draft,Example: outsourced teams wanting a partner.
