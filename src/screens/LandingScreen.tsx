@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { QUESTION_ACCENTS } from '../theme/tokens'
-import type { QuestionCode } from '../lib/types'
+import { questionAccent } from '../theme/tokens'
+import { content, questionCountWord, setting } from '../content'
 import { Hero } from '../components/ui/Hero'
 import { renderHeroLine } from '../components/ui/heroText'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -9,38 +9,17 @@ interface LandingScreenProps {
   onStart: () => void
 }
 
-const DISCOVER_ITEMS: Array<{ code: QuestionCode; name: string; text: string }> = [
-  {
-    code: 'Q1',
-    name: 'L&D Maturity',
-    text: 'Understand where your learning and development function stands today.',
-  },
-  {
-    code: 'Q2',
-    name: 'Key Challenges',
-    text: 'Identify the biggest barriers limiting learning effectiveness and growth.',
-  },
-  {
-    code: 'Q3',
-    name: 'Learning Model',
-    text: 'Review how learning is currently designed, delivered, and supported.',
-  },
-  {
-    code: 'Q4',
-    name: 'Team Capacity',
-    text: 'Understand whether your current team and resources can support your goals.',
-  },
-  {
-    code: 'Q5',
-    name: 'Future Ambition',
-    text: 'Clarify what your L&D function should achieve over the next 12 months.',
-  },
-]
+// One row per question, straight from the content sheet.
+const DISCOVER_ITEMS = content.questions.map((q) => ({
+  code: q.code,
+  name: q.name,
+  text: q.landing_blurb || q.title,
+}))
 
 const HOW_IT_WORKS = [
   {
     step: 'Answer',
-    text: 'Respond to five focused questions about your L&D function.',
+    text: `Respond to ${questionCountWord()} focused questions about your L&D function.`,
   },
   {
     step: 'Assess',
@@ -115,7 +94,7 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
 
             <ol className="divide-y divide-slate-200 lg:col-span-3">
               {DISCOVER_ITEMS.map((d, i) => {
-                const accent = QUESTION_ACCENTS[d.code]
+                const accent = questionAccent(d.code)
                 return (
                   <li key={d.code} className="flex items-start gap-5 py-5 first:pt-0 last:pb-0">
                     <span
@@ -255,15 +234,16 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
               {renderHeroLine('Ready to understand your L&D function?')}
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-white/70">
-              Complete five focused questions and discover what your current
+              Complete {questionCountWord()} focused questions and discover what your current
               learning environment may need next.
             </p>
             <button type="button" onClick={onStart} className="btn-on-dark-primary mt-7">
               Get Started
             </button>
             <p className="mt-5 text-sm text-white/50">
-              5 questions &middot; Approximately 2 minutes &middot;
-              Personalized assessment
+              {content.questions.length} questions &middot;{' '}
+              {setting('estimated_time', 'About 2 minutes')} &middot; Personalized
+              assessment
             </p>
           </div>
         </FadeIn>

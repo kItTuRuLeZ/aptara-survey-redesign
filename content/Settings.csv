@@ -1,0 +1,10 @@
+Survey-wide text. Change the Value column only.,,,
+Key,Value,Where it shows,Status
+survey_title,L&D Assessment,Header and browser tab,Approved
+hero_headline,"See where your L&D function stands, and what to do next.",Landing page headline,Approved
+hero_subtext,Five focused questions. A personalized snapshot of your priorities in about two minutes.,"Landing page, under headline",Approved
+start_button,Start Assessment,Landing page main button,Approved
+estimated_time,About 2 minutes,Landing page,Approved
+privacy_note,Your answers are used only to generate your result. We don't ask for contact details unless you choose to share them.,Landing page and result page,Approved
+result_methodology,"Your result is assembled from reviewed guidance for each of your five answers, with adjustments for common combinations. Treat it as a diagnostic starting point.","Result page, 'How this was generated'",Approved
+cta_label,Talk to an L&D specialist,"Result page, optional follow-up button",Approved

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { AnswerCode, Question, QuestionCode } from '../lib/types'
-import { QUESTION_ACCENTS } from '../theme/tokens'
+import { questionAccent } from '../theme/tokens'
 import { ProgressSteps } from '../components/ProgressSteps'
 import { QuestionOption } from '../components/QuestionOption'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -33,7 +33,7 @@ export function QuestionScreen({
   const selected = answers[question.code]
   const isFirst = currentIndex === 0
   const isLast = currentIndex === questions.length - 1
-  const accent = QUESTION_ACCENTS[question.code]
+  const accent = questionAccent(question.code)
   const prefersReducedMotion = useReducedMotion()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [confirmingStartOver, setConfirmingStartOver] = useState(false)

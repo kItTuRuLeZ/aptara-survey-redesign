@@ -1,0 +1,27 @@
+One row per answer option. Category is the short label used on the result page and in {Q1}-style placeholders.,,,,,
+Question code,Answer code,Order,Category (short label),Answer text,Status
+Q1,A,1,Early Stage,We're building our L&D function; most training is ad-hoc or informal.,Approved
+Q1,B,2,Growing,"We have some programs in place, but they're inconsistent or outdated.",Approved
+Q1,C,3,Scaling,"We have established programs and an LMS, but we're stretched thin on capacity.",Approved
+Q1,D,4,Optimising,We have a mature L&D operation and need a strategic partner to level it up.,Approved
+Q1,E,5,Transforming,"We're going through a major change (merger, growth, new system) that's resetting our L&D priorities.",Approved
+Q2,A,1,Onboarding,Getting new hires productive faster and more consistently.,Approved
+Q2,B,2,Compliance,Keeping up with mandatory training and complex regulatory requirements.,Approved
+Q2,C,3,Upskilling,Upskilling the team fast enough as the business or technology changes.,Approved
+Q2,D,4,Modernisation,Modernising old classroom or PDF content for digital or remote delivery.,Approved
+Q2,E,5,LMS Adoption,Launching a new LMS or learning platform and getting our people to actually use it.,Approved
+Q3,A,1,Instructor Led,Instructor-led training (ILT) - primarily classroom or in-person sessions.,Approved
+Q3,B,2,Virtual Training,"Virtual instructor-led (VILT) - live, synchronous online sessions.",Approved
+Q3,C,3,eLearning,eLearning modules - structured SCORM/xAPI courses hosted on an LMS.,Approved
+Q3,D,4,Micro Learning,"Microlearning - short videos, job aids, and quick-reference tools in the flow of work.",Approved
+Q3,E,5,On Job Learning,"On-the-job training, peer mentoring, or unstructured self-directed learning.",Approved
+Q4,A,1,Single Person,"Just me, I wear many hats and handle everything end-to-end.",Approved
+Q4,B,2,Small Team,"A small, agile team (2-5 people) managing multiple priorities.",Approved
+Q4,C,3,Medium Team,A mid-size team (6-15 people) with some specialized roles.,Approved
+Q4,D,4,Large Team,A large team (15+ people) with dedicated instructional designers and administrators.,Approved
+Q4,E,5,Outsourced Team,Mostly outsourced; we rely on external vendors to do the heavy lifting.,Approved
+Q5,A,1,Speed,Our people are trained faster and more consistently than they are today.,Approved
+Q5,B,2,Modernisation,"We've moved from classroom to digital, and our workforce actively engages with it.",Approved
+Q5,C,3,Capacity,We have a reliable partner doing the heavy lifting so our internal team can focus on strategy.,Approved
+Q5,D,4,Impact,Our training is directly and measurably improving business performance.,Approved
+Q5,E,5,Strategic Growth,Our L&D function has a seat at the leadership table and is viewed as a key driver of strategic growth.,Approved

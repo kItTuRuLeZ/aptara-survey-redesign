@@ -1,0 +1,317 @@
+{
+  "generated_at": "2026-10-10T12:13:31.734Z",
+  "includes_drafts": true,
+  "settings": {
+    "survey_title": "L&D Assessment",
+    "hero_headline": "See where your L&D function stands, and what to do next.",
+    "hero_subtext": "Five focused questions. A personalized snapshot of your priorities in about two minutes.",
+    "start_button": "Start Assessment",
+    "estimated_time": "About 2 minutes",
+    "privacy_note": "Your answers are used only to generate your result. We don't ask for contact details unless you choose to share them.",
+    "result_methodology": "Your result is assembled from reviewed guidance for each of your five answers, with adjustments for common combinations. Treat it as a diagnostic starting point.",
+    "cta_label": "Talk to an L&D specialist"
+  },
+  "questions": [
+    {
+      "code": "Q1",
+      "name": "Maturity Stage",
+      "title": "How would you describe where your L&D function is today?",
+      "supporting_text": "This tells us in 10 seconds whether we're talking to a CLO building from scratch, a mature team looking to scale, or someone drowning in legacy content.",
+      "landing_blurb": "Understand where your learning and development function stands today.",
+      "result_role": "Classification",
+      "display_order": 1,
+      "answers": [
+        {
+          "code": "A",
+          "text": "We're building our L&D function; most training is ad-hoc or informal.",
+          "category": "Early Stage",
+          "display_order": 1
+        },
+        {
+          "code": "B",
+          "text": "We have some programs in place, but they're inconsistent or outdated.",
+          "category": "Growing",
+          "display_order": 2
+        },
+        {
+          "code": "C",
+          "text": "We have established programs and an LMS, but we're stretched thin on capacity.",
+          "category": "Scaling",
+          "display_order": 3
+        },
+        {
+          "code": "D",
+          "text": "We have a mature L&D operation and need a strategic partner to level it up.",
+          "category": "Optimising",
+          "display_order": 4
+        },
+        {
+          "code": "E",
+          "text": "We're going through a major change (merger, growth, new system) that's resetting our L&D priorities.",
+          "category": "Transforming",
+          "display_order": 5
+        }
+      ]
+    },
+    {
+      "code": "Q2",
+      "name": "Business Pain Points",
+      "title": "What is your single biggest L&D challenge right now?",
+      "supporting_text": "This surfaces the immediate pain that brought you here and helps pinpoint where we need to focus first.",
+      "landing_blurb": "Identify the biggest barriers limiting learning effectiveness and growth.",
+      "result_role": "Signal",
+      "display_order": 2,
+      "answers": [
+        {
+          "code": "A",
+          "text": "Getting new hires productive faster and more consistently.",
+          "category": "Onboarding",
+          "display_order": 1
+        },
+        {
+          "code": "B",
+          "text": "Keeping up with mandatory training and complex regulatory requirements.",
+          "category": "Compliance",
+          "display_order": 2
+        },
+        {
+          "code": "C",
+          "text": "Upskilling the team fast enough as the business or technology changes.",
+          "category": "Upskilling",
+          "display_order": 3
+        },
+        {
+          "code": "D",
+          "text": "Modernising old classroom or PDF content for digital or remote delivery.",
+          "category": "Modernisation",
+          "display_order": 4
+        },
+        {
+          "code": "E",
+          "text": "Launching a new LMS or learning platform and getting our people to actually use it.",
+          "category": "LMS Adoption",
+          "display_order": 5
+        }
+      ]
+    },
+    {
+      "code": "Q3",
+      "name": "Delivery Models",
+      "title": "How is your training currently being delivered?",
+      "supporting_text": "This reveals the reality of your current learning ecosystem and helps identify structural gaps.",
+      "landing_blurb": "Review how learning is currently designed, delivered, and supported.",
+      "result_role": "Signal",
+      "display_order": 3,
+      "answers": [
+        {
+          "code": "A",
+          "text": "Instructor-led training (ILT) - primarily classroom or in-person sessions.",
+          "category": "Instructor Led",
+          "display_order": 1
+        },
+        {
+          "code": "B",
+          "text": "Virtual instructor-led (VILT) - live, synchronous online sessions.",
+          "category": "Virtual Training",
+          "display_order": 2
+        },
+        {
+          "code": "C",
+          "text": "eLearning modules - structured SCORM/xAPI courses hosted on an LMS.",
+          "category": "eLearning",
+          "display_order": 3
+        },
+        {
+          "code": "D",
+          "text": "Microlearning - short videos, job aids, and quick-reference tools in the flow of work.",
+          "category": "Micro Learning",
+          "display_order": 4
+        },
+        {
+          "code": "E",
+          "text": "On-the-job training, peer mentoring, or unstructured self-directed learning.",
+          "category": "On Job Learning",
+          "display_order": 5
+        }
+      ]
+    },
+    {
+      "code": "Q4",
+      "name": "Team Capacity",
+      "title": "Tell us about your internal L&D team and how you currently get work done.",
+      "supporting_text": "A team of one building for 10,000 employees is a very different conversation from a large team that just needs specialized external skills.",
+      "landing_blurb": "Understand whether your current team and resources can support your goals.",
+      "result_role": "Signal",
+      "display_order": 4,
+      "answers": [
+        {
+          "code": "A",
+          "text": "Just me, I wear many hats and handle everything end-to-end.",
+          "category": "Single Person",
+          "display_order": 1
+        },
+        {
+          "code": "B",
+          "text": "A small, agile team (2-5 people) managing multiple priorities.",
+          "category": "Small Team",
+          "display_order": 2
+        },
+        {
+          "code": "C",
+          "text": "A mid-size team (6-15 people) with some specialized roles.",
+          "category": "Medium Team",
+          "display_order": 3
+        },
+        {
+          "code": "D",
+          "text": "A large team (15+ people) with dedicated instructional designers and administrators.",
+          "category": "Large Team",
+          "display_order": 4
+        },
+        {
+          "code": "E",
+          "text": "Mostly outsourced; we rely on external vendors to do the heavy lifting.",
+          "category": "Outsourced Team",
+          "display_order": 5
+        }
+      ]
+    },
+    {
+      "code": "Q5",
+      "name": "Business Goals",
+      "title": "If you look back a year from now, what does great look like for your L&D function?",
+      "supporting_text": "This shifts the focus from \"what do you need now\" to \"what are you trying to become,\" framing the ultimate goal of our assessment.",
+      "landing_blurb": "Clarify what your L&D function should achieve over the next 12 months.",
+      "result_role": "None",
+      "display_order": 5,
+      "answers": [
+        {
+          "code": "A",
+          "text": "Our people are trained faster and more consistently than they are today.",
+          "category": "Speed",
+          "display_order": 1
+        },
+        {
+          "code": "B",
+          "text": "We've moved from classroom to digital, and our workforce actively engages with it.",
+          "category": "Modernisation",
+          "display_order": 2
+        },
+        {
+          "code": "C",
+          "text": "We have a reliable partner doing the heavy lifting so our internal team can focus on strategy.",
+          "category": "Capacity",
+          "display_order": 3
+        },
+        {
+          "code": "D",
+          "text": "Our training is directly and measurably improving business performance.",
+          "category": "Impact",
+          "display_order": 4
+        },
+        {
+          "code": "E",
+          "text": "Our L&D function has a seat at the leadership table and is viewed as a key driver of strategic growth.",
+          "category": "Strategic Growth",
+          "display_order": 5
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "title",
+      "label": "Report title",
+      "owner": "Q1",
+      "required": true
+    },
+    {
+      "id": "situation",
+      "label": "Current situation",
+      "owner": "Q1",
+      "required": true
+    },
+    {
+      "id": "strengths",
+      "label": "A strength working in your favor",
+      "owner": "Q3",
+      "required": true
+    },
+    {
+      "id": "gap",
+      "label": "Close the gap",
+      "owner": "Q2",
+      "required": true
+    },
+    {
+      "id": "risk",
+      "label": "Reduce the risk",
+      "owner": "Q4",
+      "required": true
+    },
+    {
+      "id": "next30",
+      "label": "Next 30 days",
+      "owner": "Q2",
+      "required": true
+    },
+    {
+      "id": "next90",
+      "label": "Next 90 days",
+      "owner": "Q5",
+      "required": true
+    }
+  ],
+  "blocks": {
+    "title": {
+      "A": "Building Foundations for Scale",
+      "B": "From Inconsistent to Intentional",
+      "C": "Scaling Without Burning Out",
+      "D": "From Mature to Strategic",
+      "E": "Resetting L&D for What's Next"
+    },
+    "situation": {
+      "A": "You're at the start of building a formal L&D function. Most learning happens informally or on demand today, which gives you a rare chance to design the right foundations from the outset rather than retrofit them later.",
+      "B": "You have programs in place, but they vary in quality and some have fallen out of date. Learners get an uneven experience, and it's hard to show which programs are actually working.",
+      "C": "You've built solid programs and run an LMS, so the foundations are there. The constraint now is capacity: demand for new and updated content is growing faster than your team can deliver it.",
+      "D": "You run a mature L&D operation with established processes and platforms. Your next gains won't come from doing more of the same; they'll come from sharper strategy, innovation and measurable business impact.",
+      "E": "Your organization is going through a major change, and your L&D priorities are being reset with it. That brings pressure to move quickly, and a real opportunity to rebuild learning around where the business is heading."
+    },
+    "strengths": {
+      "A": "Instructor-led sessions give learners direct access to expertise and real conversation. That human connection builds trust and engagement that's hard to replicate in other formats.",
+      "B": "Live virtual sessions already reach dispersed teams without travel, so your people are used to learning online and your facilitators know how to engage a remote audience.",
+      "C": "Structured eLearning on your LMS gives you consistency, completion tracking and a reusable library, which is a strong base for scaling and measuring learning.",
+      "D": "Short, in-the-flow resources mean learning already fits around real work. Your people get help at the moment of need, which is exactly where performance improves.",
+      "E": "Learning on the job and through peers keeps training grounded in real work. Your experienced people already pass on knowledge that no course could fully capture."
+    },
+    "gap": {
+      "A": "New hires don't follow one consistent path to productivity. Without a structured, repeatable onboarding journey, time-to-competence depends on who they sit next to and how busy that person is.",
+      "B": "Keeping mandatory training current with changing regulations takes constant effort. Completions are tracked, but genuine understanding and audit readiness are much harder to demonstrate.",
+      "C": "Skills needs are changing faster than programs can be built. Without a quick way to spot gaps and turn them into targeted learning, your people fall behind just when the business needs them most.",
+      "D": "Valuable knowledge is locked in classroom decks and PDFs that don't work for digital or remote learners. Until it's converted, every new audience depends on a live session or a static document.",
+      "E": "A platform alone doesn't drive usage. Without engaging content, clear reasons to log in and a launch plan, people will treat the new LMS as optional and the investment won't pay off."
+    },
+    "risk": {
+      "A": "With one person carrying everything, every new request competes with the work already in flight. Strategic projects stall, and if you're away or move on, much of the function's knowledge goes with you.",
+      "B": "A small team juggling many priorities ends up spending its time on production and firefighting. The strategic work that would raise L&D's impact keeps getting pushed to next quarter.",
+      "C": "A mid-size team can deliver a lot, but peaks in demand and gaps in specialist skills like media, accessibility or localization still create bottlenecks that slow the whole pipeline.",
+      "D": "With a large team, the risk shifts from capacity to focus. Without clear priorities and measures, effort spreads across many programs and it's hard to show leadership the return on investment.",
+      "E": "Relying mostly on vendors keeps your team lean, but quality, consistency and know-how can drift across suppliers, and managing them can quietly become a full-time job of its own."
+    },
+    "next30": {
+      "A": "Map the onboarding journey for one key role, from day one to full productivity, and mark the steps that are repeated, inconsistent or dependent on one person.",
+      "B": "List your mandatory courses with their regulatory owner and last review date, then flag the two or three that are most out of date or carry the highest risk.",
+      "C": "Pick one business-critical capability and ask managers to rate where their teams stand today. Use the gaps they report to define your first focused upskilling sprint.",
+      "D": "Inventory your classroom and PDF content and rank it by audience size and business importance. The top few items become your first candidates for digital conversion.",
+      "E": "Talk to five to ten intended users about what would make them log in. Use what you hear to choose the first two or three courses and messages for launch."
+    },
+    "next90": {
+      "A": "Work toward faster, more consistent training by turning your core content into a library of reusable digital modules, so every learner gets the same quality and live time is saved for coaching.",
+      "B": "Plan a phased move from classroom to digital, starting with your highest-reach programs, and design for engagement with interactive, mobile-friendly formats your people will choose to use.",
+      "C": "Bring in a reliable content partner for production and upkeep, so your internal team can step back from building courses and focus on strategy, stakeholders and measuring impact.",
+      "D": "Tie each major program to a business metric, such as time-to-productivity, error rates or sales, and build measurement in from the start so you can show leadership what learning delivers.",
+      "E": "Position L&D as a strategic partner by aligning your roadmap with leadership's growth priorities and reporting results in business terms. That earns a seat at the table when decisions are made."
+    }
+  },
+  "rules": []
+}

@@ -1,10 +1,7 @@
-import type { AnswerCode, QuestionCode } from './types'
+import type { AnswerCode, Question, QuestionCode } from './types'
 
 const STORAGE_KEY = 'aptara-assessment-state'
 const SCHEMA_VERSION = 1
-const QUESTION_CODES: QuestionCode[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']
-const ANSWER_CODES: AnswerCode[] = ['A', 'B', 'C', 'D', 'E']
-const TOTAL_QUESTIONS = QUESTION_CODES.length
 
 export interface PersistedState {
   version: number
@@ -18,7 +15,10 @@ export interface PersistedState {
  * data is ever stored (just answer codes and a position index).
  */
 
-function isValidPersistedState(value: unknown): value is PersistedState {
+function isValidPersistedState(
+  value: unknown,
+  questions: Question[],
+): value is PersistedState {
   if (typeof value !== 'object' || value === null) return false
   const candidate = value as Record<string, unknown>
 
@@ -26,7 +26,7 @@ function isValidPersistedState(value: unknown): value is PersistedState {
   if (
     typeof candidate.currentIndex !== 'number' ||
     candidate.currentIndex < 0 ||
-    candidate.currentIndex >= TOTAL_QUESTIONS
+    candidate.currentIndex >= questions.length
   ) {
     return false
   }
@@ -34,8 +34,9 @@ function isValidPersistedState(value: unknown): value is PersistedState {
 
   return Object.entries(candidate.answers as Record<string, unknown>).every(
     ([question, answer]) =>
-      QUESTION_CODES.includes(question as QuestionCode) &&
-      ANSWER_CODES.includes(answer as AnswerCode),
+      questions
+        .find((q) => q.code === question)
+        ?.answers.some((a) => a.code === answer) ?? false,
   )
 }
 
@@ -50,16 +51,20 @@ function migrate(raw: Record<string, unknown>): PersistedState | null {
   return null
 }
 
-export function loadPersistedState(): PersistedState | null {
+/**
+ * Saved answers are checked against the current questions, so state saved
+ * before a content update that removed a question or answer is discarded.
+ */
+export function loadPersistedState(questions: Question[]): PersistedState | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
 
     const parsed = JSON.parse(raw) as Record<string, unknown>
-    if (isValidPersistedState(parsed)) return parsed
+    if (isValidPersistedState(parsed, questions)) return parsed
 
     const migrated = migrate(parsed)
-    return migrated && isValidPersistedState(migrated) ? migrated : null
+    return migrated && isValidPersistedState(migrated, questions) ? migrated : null
   } catch {
     // Corrupt JSON, storage disabled (private browsing), or any other
     // unexpected shape — treat as if there were no saved state.

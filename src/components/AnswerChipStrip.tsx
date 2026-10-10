@@ -1,5 +1,5 @@
 import type { AnswerCode, Question, QuestionCode } from '../lib/types'
-import { QUESTION_ACCENTS } from '../theme/tokens'
+import { questionAccent } from '../theme/tokens'
 
 interface AnswerChipStripProps {
   questions: Question[]
@@ -13,7 +13,7 @@ export function AnswerChipStrip({ questions, answers }: AnswerChipStripProps) {
         const answerCode = answers[q.code]
         const answer = q.answers.find((a) => a.code === answerCode)
         if (!answer) return null
-        const accent = QUESTION_ACCENTS[q.code]
+        const accent = questionAccent(q.code)
 
         return (
           <div key={q.code} className="flex items-start gap-3 px-5 py-4">

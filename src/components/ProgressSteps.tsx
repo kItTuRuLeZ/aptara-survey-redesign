@@ -1,5 +1,5 @@
 import type { Question, QuestionCode } from '../lib/types'
-import { QUESTION_ACCENTS } from '../theme/tokens'
+import { questionAccent } from '../theme/tokens'
 
 interface ProgressStepsProps {
   questions: Question[]
@@ -13,7 +13,7 @@ export function ProgressSteps({
   currentIndex,
 }: ProgressStepsProps) {
   const current = questions.find((q) => q.code === currentCode)
-  const accent = QUESTION_ACCENTS[currentCode]
+  const accent = questionAccent(currentCode)
   const percent = Math.round(((currentIndex + 1) / questions.length) * 100)
 
   return (

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import type { AnswerCode, QuestionAnswer, QuestionCode } from '../lib/types'
-import { QUESTION_ACCENTS } from '../theme/tokens'
+import { questionAccent } from '../theme/tokens'
 import { useReducedMotion } from '../lib/useReducedMotion'
 
 interface QuestionOptionProps {
@@ -32,7 +32,7 @@ export function QuestionOption({
   disabled = false,
   error = false,
 }: QuestionOptionProps) {
-  const accent = QUESTION_ACCENTS[questionCode]
+  const accent = questionAccent(questionCode)
   const inputId = `${questionCode}-${answer.code}`
   const prefersReducedMotion = useReducedMotion()
 
