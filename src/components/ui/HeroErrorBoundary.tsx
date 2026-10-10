@@ -10,7 +10,7 @@ interface HeroErrorBoundaryState {
 }
 
 /**
- * Catches synchronous render-phase errors from the 3D hero subtree.
+ * Catches synchronous render-phase errors from the shader background.
  * This is defense-in-depth, not the primary safety net — Three.js
  * initialization happens inside a useEffect, and React error boundaries do
  * not catch errors thrown from effects. The primary protection is the

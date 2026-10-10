@@ -14,15 +14,11 @@ vi.mock('../../lib/useReducedMotion', () => ({
 
 const shaderHeroState = vi.hoisted(() => ({ shouldThrow: false }))
 vi.mock('./shaderHero', () => ({
-  ShaderHero: ({ onStart }: { onStart: () => void }) => {
+  ShaderHero: () => {
     if (shaderHeroState.shouldThrow) {
       throw new Error('shader init failed')
     }
-    return (
-      <div data-testid="hero-3d">
-        <button onClick={onStart}>Get Started</button>
-      </div>
-    )
+    return <div data-testid="hero-3d" />
   },
 }))
 
@@ -49,6 +45,24 @@ describe('Hero', () => {
     render(<Hero onStart={vi.fn()} />)
 
     expect(await screen.findByTestId('hero-3d')).toBeInTheDocument()
+  })
+
+  it('shows the same heading and CTA while the shader loads as after, so the layout never swaps', async () => {
+    mockIsWebGLAvailable.mockReturnValue(true)
+    mockShouldSkip3D.mockReturnValue(false)
+    mockUseReducedMotion.mockReturnValue(false)
+
+    render(<Hero onStart={vi.fn()} />)
+
+    // The copy is in the first render, without waiting for the lazy shader.
+    const heading = screen.getByRole('heading', { level: 1 })
+    const cta = screen.getByRole('button', { name: /get started/i })
+    expect(heading).toHaveTextContent(/Understand your\s*L&D function\./)
+
+    // Once it resolves, the very same elements are still mounted.
+    await screen.findByTestId('hero-3d')
+    expect(screen.getByRole('heading', { level: 1 })).toBe(heading)
+    expect(screen.getByRole('button', { name: /get started/i })).toBe(cta)
   })
 
   it('renders the static fallback when WebGL is unavailable, and the primary CTA still works', async () => {

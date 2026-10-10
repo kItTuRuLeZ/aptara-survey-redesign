@@ -5,21 +5,14 @@ export interface HeroChapter {
   lines: string[]
 }
 
-/**
- * Shared between the shader hero and its static fallback so the
- * "5 questions / 2 minutes / personalized" stat row only lives in one place.
- */
+/** The "5 questions / 2 minutes / personalized" stat row under the hero. */
 export const HERO_STATS = [
   `${content.questions.length} questions`,
   setting('estimated_time', 'About 2 minutes'),
   'Personalized result',
 ]
 
-/**
- * Shared between the 3D hero (horizon-hero-section.tsx) and the static
- * fallback (HeroFallback.tsx) so both ever have exactly one copy of the
- * copy to keep in sync.
- */
+/** Hero copy (HeroCopy.tsx shows the first chapter). */
 export const HERO_CHAPTERS: HeroChapter[] = [
   {
     title: 'L&D ASSESSMENT',
