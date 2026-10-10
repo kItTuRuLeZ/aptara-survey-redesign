@@ -7,6 +7,10 @@ interface ProgressStepsProps {
   currentIndex: number
 }
 
+/**
+ * One line of progress text plus a bar. The bar shows questions answered
+ * before this one, so the last question doesn't read as already complete.
+ */
 export function ProgressSteps({
   questions,
   currentCode,
@@ -14,21 +18,35 @@ export function ProgressSteps({
 }: ProgressStepsProps) {
   const current = questions.find((q) => q.code === currentCode)
   const accent = questionAccent(currentCode)
-  const percent = Math.round(((currentIndex + 1) / questions.length) * 100)
+  const total = questions.length
+  const isLast = currentIndex === total - 1
+  const percent = Math.round((currentIndex / total) * 100)
+  const label = isLast ? 'Final question' : `Question ${currentIndex + 1} of ${total}`
 
   return (
     <div>
-      <div className="flex items-center justify-between text-sm font-semibold text-slate-500">
-        <span>
-          Question {currentIndex + 1} of {questions.length}
-        </span>
-        <span style={{ color: accent.accent }}>{current?.name}</span>
-        <span>{percent}%</span>
-      </div>
-      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200">
+      <p className="text-sm font-semibold text-slate-600">
+        {label}
+        {current && (
+          <>
+            <span aria-hidden="true"> &middot; </span>
+            <span className="sr-only">: </span>
+            {current.name}
+          </>
+        )}
+      </p>
+      <div
+        role="progressbar"
+        aria-label="Assessment progress"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={currentIndex}
+        aria-valuetext={`${currentIndex} of ${total} questions answered`}
+        className="mt-2 h-1.5 w-full rounded-full bg-slate-200"
+      >
         <div
           className="h-1.5 rounded-full transition-all duration-300"
-          style={{ width: `${percent}%`, backgroundColor: accent.accent }}
+          style={{ width: `${Math.max(percent, 4)}%`, backgroundColor: accent.accent }}
         />
       </div>
     </div>

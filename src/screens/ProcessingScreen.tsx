@@ -38,7 +38,7 @@ export function ProcessingScreen() {
         summary for your selected combination.
       </p>
 
-      <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-600">
         Preparing your insights &middot; 100%
       </p>
       <ul className="mt-3 space-y-2 text-left">
@@ -56,7 +56,7 @@ export function ProcessingScreen() {
         ))}
       </ul>
 
-      <p className="mt-6 text-sm text-slate-400">This will only take a moment.</p>
+      <p className="mt-6 text-sm text-slate-600">This will only take a moment.</p>
     </div>
   )
 }

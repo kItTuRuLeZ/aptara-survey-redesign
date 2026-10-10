@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { AnswerCode, Question, QuestionCode } from '../lib/types'
-import { questionAccent } from '../theme/tokens'
 import { ProgressSteps } from '../components/ProgressSteps'
 import { QuestionOption } from '../components/QuestionOption'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -33,7 +32,6 @@ export function QuestionScreen({
   const selected = answers[question.code]
   const isFirst = currentIndex === 0
   const isLast = currentIndex === questions.length - 1
-  const accent = questionAccent(question.code)
   const prefersReducedMotion = useReducedMotion()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [confirmingStartOver, setConfirmingStartOver] = useState(false)
@@ -77,7 +75,7 @@ export function QuestionScreen({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 pb-24 pt-10 sm:px-7 sm:pb-14 sm:pt-14">
+    <div className="mx-auto max-w-2xl px-5 pt-6 sm:px-7 sm:pt-8">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           <ProgressSteps
@@ -93,7 +91,7 @@ export function QuestionScreen({
           className={`btn shrink-0 gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs ${
             confirmingStartOver
               ? 'bg-q3-tint text-q3 hover:bg-q3-tint'
-              : 'text-slate-400 hover:bg-slate-100 hover:text-navy'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-navy'
           }`}
         >
           <motion.svg
@@ -121,26 +119,20 @@ export function QuestionScreen({
         initial={prefersReducedMotion ? false : { opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
-        className="mt-8"
+        className="mt-6"
       >
-        <p
-          className="text-xs font-bold uppercase tracking-[0.17em]"
-          style={{ color: accent.accent }}
-        >
-          {question.name}
-        </p>
-        <h2
+        <h1
           ref={headingRef}
           tabIndex={-1}
-          className="mt-3 text-3xl font-semibold tracking-tight text-navy outline-none sm:text-4xl"
+          className="text-2xl font-semibold tracking-tight text-navy outline-none sm:text-3xl"
         >
           {question.title}
-        </h2>
+        </h1>
 
         <div
           role="radiogroup"
           aria-label={question.title}
-          className="mt-6 flex flex-col gap-3"
+          className="mt-5 flex flex-col gap-2.5"
         >
           {question.answers.map((answer) => (
             <QuestionOption
@@ -154,12 +146,17 @@ export function QuestionScreen({
         </div>
       </motion.div>
 
-      {/* Sticky above the safe-area on mobile; normal document flow from
-          sm: up. No boxed panel — sits directly on the page so its edges
-          line up with the answer cards above it. */}
-      <div className="sticky bottom-0 z-20 mt-8 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 sm:static sm:z-auto sm:pb-0 sm:pt-6">
-        <div className="flex items-center justify-between gap-4">
-          <button type="button" onClick={onPrevious} disabled={isFirst} className="btn-secondary">
+      {/* Sticky at the bottom of the screen on every size (above the safe
+          area on phones), with a solid background so answers never show
+          through it, and Continue is always reachable without scrolling. */}
+      <div className="sticky bottom-0 z-20 -mx-5 mt-6 border-t border-slate-200 bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 sm:-mx-7 sm:px-7 sm:pb-4 shadow-[0_-8px_16px_-12px_rgba(7,29,61,0.25)]">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={isFirst}
+            className="btn-secondary whitespace-nowrap px-4 sm:px-7"
+          >
             &larr; Previous
           </button>
           <button
@@ -167,15 +164,15 @@ export function QuestionScreen({
             onClick={isLast ? onSubmit : onNext}
             disabled={!selected}
             aria-describedby={hintId}
-            className="btn-primary"
+            className="btn-primary whitespace-nowrap px-5 sm:px-7"
           >
             {isLast ? 'Submit Assessment' : 'Continue'}
           </button>
         </div>
         <p
           id={hintId}
-          className={`mt-2.5 flex items-center justify-end gap-1.5 text-right text-sm font-medium ${
-            selected ? 'text-q4' : 'text-slate-400'
+          className={`mt-1.5 flex items-center justify-end gap-1.5 text-right text-sm font-medium ${
+            selected ? 'text-q4-ink' : 'text-slate-600'
           }`}
         >
           {selected && (

@@ -25,7 +25,7 @@ export function AnswerChipStrip({ questions, answers }: AnswerChipStripProps) {
             <div className="min-w-0">
               <p
                 className="text-xs font-bold uppercase tracking-wide"
-                style={{ color: accent.accent }}
+                style={{ color: accent.ink }}
               >
                 {q.code} &middot; {q.name}
               </p>

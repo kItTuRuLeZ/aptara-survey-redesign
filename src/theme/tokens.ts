@@ -3,6 +3,8 @@ import { content } from '../content'
 
 interface AccentTokens {
   accent: string
+  /** Darker shade for text, AA contrast on white and the page background. */
+  ink: string
   tint: string
   text: string
   bg: string
@@ -18,6 +20,7 @@ interface AccentTokens {
 const ACCENT_PALETTE: AccentTokens[] = [
   {
     accent: '#12859B',
+    ink: '#0E6B7D',
     tint: '#EAF6F8',
     text: 'text-q1',
     bg: 'bg-q1-tint',
@@ -26,6 +29,7 @@ const ACCENT_PALETTE: AccentTokens[] = [
   },
   {
     accent: '#D98B16',
+    ink: '#9A5B00',
     tint: '#FFF6E7',
     text: 'text-q2',
     bg: 'bg-q2-tint',
@@ -34,6 +38,7 @@ const ACCENT_PALETTE: AccentTokens[] = [
   },
   {
     accent: '#C83252',
+    ink: '#B02545',
     tint: '#FFF0F3',
     text: 'text-q3',
     bg: 'bg-q3-tint',
@@ -42,6 +47,7 @@ const ACCENT_PALETTE: AccentTokens[] = [
   },
   {
     accent: '#168666',
+    ink: '#11704F',
     tint: '#EDF8F4',
     text: 'text-q4',
     bg: 'bg-q4-tint',
@@ -50,6 +56,7 @@ const ACCENT_PALETTE: AccentTokens[] = [
   },
   {
     accent: '#205A9E',
+    ink: '#205A9E',
     tint: '#EEF3FA',
     text: 'text-q5',
     bg: 'bg-q5-tint',

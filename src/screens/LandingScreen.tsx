@@ -79,7 +79,7 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
         <div className="mx-auto max-w-4xl px-5 sm:px-7">
           <FadeIn className="grid gap-10 lg:grid-cols-5 lg:gap-16">
             <div className="lg:col-span-2">
-              <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-500">
                 What you&apos;ll discover
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
@@ -120,7 +120,7 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
           </FadeIn>
 
           <FadeIn className="mt-24">
-            <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-500">
               How It Works
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
@@ -148,7 +148,7 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
       <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-7 sm:pb-28">
         {/* Sample snapshot — framed like a product preview */}
         <FadeIn className="mt-20">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
             Your L&amp;D Snapshot
           </p>
           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
@@ -160,19 +160,19 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
             <div className="p-7 sm:p-9">
               <div className="flex flex-wrap items-center justify-between gap-6">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
                     Current L&amp;D maturity
                   </p>
-                  <p className="mt-1.5 text-2xl font-semibold text-q1">Scaling</p>
+                  <p className="mt-1.5 text-2xl font-semibold text-q1-ink">Scaling</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
                     Primary Priority
                   </p>
-                  <p className="mt-1.5 text-2xl font-semibold text-q2">Capacity</p>
+                  <p className="mt-1.5 text-2xl font-semibold text-q2-ink">Capacity</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
                     Future Focus
                   </p>
                   <p className="mt-1.5 text-2xl font-semibold text-q5">Sustainable Growth</p>
@@ -197,7 +197,7 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
 
         {/* Your result — plain, no card, leads into the final CTA */}
         <FadeIn className="mt-20 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
             Your Result
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">

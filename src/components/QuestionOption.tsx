@@ -39,7 +39,7 @@ export function QuestionOption({
   return (
     <label
       htmlFor={inputId}
-      className={`group relative flex w-full items-start gap-5 overflow-hidden rounded-xl border bg-white py-5 pl-6 pr-5 transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-navy-light has-[:focus-visible]:ring-offset-2 ${
+      className={`group relative flex w-full items-start gap-4 overflow-hidden rounded-xl border bg-white py-3.5 pl-5 pr-4 sm:py-4 transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-navy-light has-[:focus-visible]:ring-offset-2 ${
         disabled
           ? 'cursor-not-allowed opacity-50'
           : 'cursor-pointer has-[:hover]:-translate-y-0.5 has-[:hover]:shadow-sm'
@@ -70,8 +70,8 @@ export function QuestionOption({
       />
 
       <span
-        className="select-none text-2xl font-bold tabular-nums transition-colors duration-150"
-        style={{ color: selected ? accent.accent : '#cbd5e1' }}
+        className="select-none text-xl font-bold tabular-nums transition-colors duration-150"
+        style={{ color: selected ? accent.ink : '#94a3b8' }}
         aria-hidden="true"
       >
         {answer.code}
@@ -80,11 +80,11 @@ export function QuestionOption({
       <span className="min-w-0 flex-1 pt-0.5">
         <span
           className="block text-xs font-bold uppercase tracking-wide transition-colors duration-150"
-          style={{ color: selected ? accent.accent : '#94a3b8' }}
+          style={{ color: selected ? accent.ink : '#64748b' }}
         >
           {answer.category}
         </span>
-        <span className="mt-1 block text-base text-navy sm:text-lg">
+        <span className="mt-0.5 block text-base text-navy">
           {answer.text}
         </span>
       </span>

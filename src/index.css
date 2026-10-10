@@ -19,6 +19,14 @@
   --color-q5: #205a9e;
   --color-q5-tint: #eef3fa;
 
+  /* Darker shades of the accents for text, meeting WCAG AA (4.5:1) on
+     white and on the page background. */
+  --color-q1-ink: #0e6b7d;
+  --color-q2-ink: #9a5b00;
+  --color-q3-ink: #b02545;
+  --color-q4-ink: #11704f;
+  --color-q5-ink: #205a9e;
+
   --color-surface: #f4f7fa;
   --color-surface-alt: #f8fafc;
 }

@@ -25,7 +25,7 @@ export function ResultsScreen({
   answers,
   onRestart,
 }: ResultsScreenProps) {
-  const [copied, setCopied] = useState(false)
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const prefersReducedMotion = useReducedMotion()
   const section = (id: string) => result.sections.find((s) => s.id === id)
   const situation = section('situation')?.text ?? ''
@@ -51,9 +51,14 @@ export function ResultsScreen({
       `Next 30 days: ${next30}`,
       `Next 90 days: ${next90}`,
     ].join('\n')
-    await navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      // Some browsers, and pages embedded in an iframe, block the clipboard.
+      await navigator.clipboard.writeText(text)
+      setCopyState('copied')
+    } catch {
+      setCopyState('failed')
+    }
+    setTimeout(() => setCopyState('idle'), 3000)
   }
 
   return (
@@ -84,7 +89,7 @@ export function ResultsScreen({
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         {result.signals.map((signal) => (
           <div key={signal.code} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
               {signal.label}
             </p>
             <p className="mt-1 text-base font-semibold text-navy">{signal.value}</p>
@@ -101,13 +106,13 @@ export function ResultsScreen({
 
       {/* Top two recommended priorities */}
       <div className="mt-12">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
           Top Priorities
         </p>
         <div className="mt-4 grid gap-6 sm:grid-cols-2">
           {priorities.map((priority, i) => (
             <div key={priority.id} className="rounded-xl border border-slate-200 bg-white p-6">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                 Priority {i + 1}
               </p>
               <p className="mt-1 text-lg font-semibold text-navy">{priority.label}</p>
@@ -119,7 +124,7 @@ export function ResultsScreen({
 
       {extraSections.map((extra) => (
         <div key={extra.id} className="mt-12">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
             {extra.label}
           </p>
           <p className="mt-3 text-base leading-7 text-slate-600">{extra.text}</p>
@@ -128,7 +133,7 @@ export function ResultsScreen({
 
       {/* Practical next steps */}
       <div className="mt-12 border-t border-slate-200 pt-10">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
           What To Do Next
         </p>
         <div className="mt-4">
@@ -137,8 +142,8 @@ export function ResultsScreen({
       </div>
 
       {/* Methodology — plain-language, clearly diagnostic rather than marketing */}
-      <p className="mt-10 border-t border-slate-200 pt-6 text-sm leading-6 text-slate-400">
-        <span className="font-semibold text-slate-500">How this was generated: </span>
+      <p className="mt-10 border-t border-slate-200 pt-6 text-sm leading-6 text-slate-600">
+        <span className="font-semibold text-slate-700">How this was generated: </span>
         {setting(
           'result_methodology',
           'Your result is assembled from reviewed guidance for each of your answers. Treat it as a diagnostic starting point.',
@@ -147,7 +152,7 @@ export function ResultsScreen({
 
       {/* Supporting detail */}
       <div className="mt-8">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-400">
+        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
           Your Responses
         </p>
         <div className="mt-3">
@@ -168,7 +173,7 @@ export function ResultsScreen({
 
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 border-t border-slate-200 pt-7">
         <button type="button" onClick={handleCopy} className="btn-secondary px-5 py-2.5">
-          {copied && (
+          {copyState === 'copied' && (
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-q4" aria-hidden="true">
               <path
                 d="m5 12 4 4L19 6"
@@ -179,7 +184,13 @@ export function ResultsScreen({
               />
             </svg>
           )}
-          {copied ? 'Copied to clipboard' : 'Copy summary'}
+          <span aria-live="polite">
+            {copyState === 'copied'
+              ? 'Copied to clipboard'
+              : copyState === 'failed'
+                ? "Couldn't copy. Try again"
+                : 'Copy summary'}
+          </span>
         </button>
         <button
           type="button"
@@ -190,7 +201,7 @@ export function ResultsScreen({
         </button>
       </div>
 
-      <p className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-400">
+      <p className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600">
         {setting('privacy_note')}
       </p>
     </motion.div>
