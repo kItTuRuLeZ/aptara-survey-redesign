@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { questionAccent } from '../theme/tokens'
-import { content, questionCountWord, setting } from '../content'
+import { content, setting } from '../content'
+import { groupSteps } from '../lib/answers'
 import { Hero } from '../components/ui/Hero'
 import { renderHeroLine } from '../components/ui/heroText'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -9,33 +10,40 @@ interface LandingScreenProps {
   onStart: () => void
 }
 
-// One row per question, straight from the content sheet.
-const DISCOVER_ITEMS = content.questions.map((q) => ({
-  code: q.code,
-  name: q.name,
-  text: q.landing_blurb || q.title,
+// One row per step, straight from the content sheet.
+const STEPS = groupSteps(content.questions)
+const DISCOVER_ITEMS = STEPS.map((s) => ({
+  code: s.questions[0].code,
+  name: s.name,
+  text: s.questions[0].landing_blurb || s.questions[0].title,
 }))
+
+const START_LABEL = setting('start_button', 'Start the assessment')
+const STEP_COUNT = setting('step_count_label', `${STEPS.length} short steps`)
 
 const HOW_IT_WORKS = [
   {
     step: 'Answer',
-    text: `Respond to ${questionCountWord()} focused questions about your L&D function.`,
+    text: `${STEP_COUNT.charAt(0).toUpperCase()}${STEP_COUNT.slice(1)} about how your organization manages learning.`,
   },
   {
-    step: 'Assess',
-    text: 'Your responses are evaluated against the key areas of L&D maturity.',
+    step: 'Match',
+    text: 'Your answers are matched to predefined guidance written for each situation.',
   },
   {
-    step: 'Discover',
-    text: 'Receive a personalized snapshot highlighting priorities and opportunities.',
+    step: 'Act',
+    text: 'Get your priorities, why they matter, and 30- and 90-day actions you can copy or print.',
   },
 ]
 
-const SNAPSHOT_BULLETS = [
-  'Established learning foundations',
-  'Opportunity to improve scalability',
-  'Capacity is an important next priority',
-]
+// Illustrative only, and labelled as such on the page.
+const EXAMPLE = {
+  stage: 'Developing',
+  challenge: 'Content upkeep',
+  goal: 'Quality and consistency',
+  title: 'Your next L&D priority: modernize priority content',
+  priorities: ['Modernize priority content', 'Raise quality and consistency', 'Standardize what already works'],
+}
 
 function FadeIn({
   children,
@@ -80,15 +88,14 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
           <FadeIn className="grid gap-10 lg:grid-cols-5 lg:gap-16">
             <div className="lg:col-span-2">
               <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-500">
-                What you&apos;ll discover
+                {STEP_COUNT}
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
-                {renderHeroLine('See your L&D function more clearly.')}
+                What we&apos;ll ask about
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                The assessment looks beyond individual questions to give you a
-                clearer picture of where your learning function is today and
-                where attention may be needed next.
+                Each step covers one part of how learning works in your
+                organization. There are no right or wrong answers.
               </p>
             </div>
 
@@ -97,12 +104,12 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
                 const accent = questionAccent(d.code)
                 return (
                   <li key={d.code} className="flex items-start gap-5 py-5 first:pt-0 last:pb-0">
+                    {/* Decorative number, drawn by CSS so it isn't read or contrast-checked as text */}
                     <span
-                      className="select-none text-4xl font-bold tabular-nums text-slate-200 sm:text-5xl"
+                      data-n={String(i + 1).padStart(2, '0')}
+                      className="select-none text-4xl font-bold tabular-nums text-slate-200 before:content-[attr(data-n)] sm:text-5xl"
                       aria-hidden="true"
-                    >
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
+                    />
                     <div className="min-w-0 pt-1">
                       <p className="flex items-center gap-2 text-lg font-semibold text-navy">
                         <span
@@ -124,18 +131,17 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
               How It Works
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
-              Simple questions. Useful direction.
+              From answers to next steps
             </h2>
 
             <div className="mt-10 grid gap-10 divide-slate-200 sm:grid-cols-3 sm:gap-0 sm:divide-x">
               {HOW_IT_WORKS.map((s, i) => (
                 <div key={s.step} className="sm:px-8 sm:first:pl-0 sm:last:pr-0">
                   <span
-                    className="select-none text-4xl font-bold tabular-nums text-slate-200"
+                    data-n={String(i + 1).padStart(2, '0')}
+                    className="block select-none text-4xl font-bold tabular-nums text-slate-200 before:content-[attr(data-n)]"
                     aria-hidden="true"
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
+                  />
                   <p className="mt-3 text-xl font-semibold text-navy">{s.step}</p>
                   <p className="mt-2 text-base leading-6 text-slate-500">{s.text}</p>
                 </div>
@@ -146,75 +152,57 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
       </div>
 
       <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-7 sm:pb-28">
-        {/* Sample snapshot — framed like a product preview */}
+        {/* Example result: clearly labelled so it can't be mistaken for the visitor's own */}
         <FadeIn className="mt-20">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-            Your L&amp;D Snapshot
+          <h2 className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
+            Example result
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            An illustration of what you&apos;ll receive. It is not based on your answers.
           </p>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-            <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+          <figure
+            aria-label="Example result, for illustration only"
+            className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <span className="flex gap-1.5" aria-hidden="true">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+              </span>
+              <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-slate-700">
+                Example
+              </span>
             </div>
             <div className="p-7 sm:p-9">
-              <div className="flex flex-wrap items-center justify-between gap-6">
+              <p className="text-xl font-semibold text-navy sm:text-2xl">{EXAMPLE.title}</p>
+              <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Current L&amp;D maturity
-                  </p>
-                  <p className="mt-1.5 text-2xl font-semibold text-q1-ink">Scaling</p>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Self-reported stage</dt>
+                  <dd className="mt-1 text-lg font-semibold text-q1-ink">{EXAMPLE.stage}</dd>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Primary Priority
-                  </p>
-                  <p className="mt-1.5 text-2xl font-semibold text-q2-ink">Capacity</p>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Main challenge</dt>
+                  <dd className="mt-1 text-lg font-semibold text-q2-ink">{EXAMPLE.challenge}</dd>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Future Focus
-                  </p>
-                  <p className="mt-1.5 text-2xl font-semibold text-q5">Sustainable Growth</p>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Business goal</dt>
+                  <dd className="mt-1 text-lg font-semibold text-q5">{EXAMPLE.goal}</dd>
                 </div>
-              </div>
-              <p className="mt-6 text-base leading-7 text-slate-600">
-                Your L&amp;D function has established foundations and is
-                positioned for growth, but capacity and scalability may
-                require greater attention.
-              </p>
-              <ul className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-500">
-                {SNAPSHOT_BULLETS.map((b) => (
-                  <li key={b} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-q4" />
-                    {b}
+              </dl>
+              <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-600">Top priorities</p>
+              <ol className="mt-2 grid gap-1.5 text-base text-slate-700">
+                {EXAMPLE.priorities.map((p, i) => (
+                  <li key={p} className="flex items-center gap-2.5">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-q4-tint text-xs font-bold text-q4-ink">
+                      {i + 1}
+                    </span>
+                    {p}
                   </li>
                 ))}
-              </ul>
+              </ol>
             </div>
-          </div>
-        </FadeIn>
-
-        {/* Your result — plain, no card, leads into the final CTA */}
-        <FadeIn className="mt-20 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-            Your Result
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
-            Turn your responses into a clearer view of what comes next.
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600">
-            At the end of the assessment, you&apos;ll receive a personalized
-            snapshot that highlights your current position, key priority, and
-            potential area of focus.
-          </p>
-          <button
-            type="button"
-            onClick={onStart}
-            className="btn mt-7 border border-navy px-8 py-3.5 text-navy hover:-translate-y-0.5 hover:bg-navy hover:text-white hover:shadow-md"
-          >
-            Start Assessment
-          </button>
+          </figure>
         </FadeIn>
 
         {/* Final CTA — the strong visual close */}
@@ -231,19 +219,17 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
               L&amp;D Assessment
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              {renderHeroLine('Ready to understand your L&D function?')}
+              {renderHeroLine('Ready to find your next L&D priority?')}
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-white/70">
-              Complete {questionCountWord()} focused questions and discover what your current
-              learning environment may need next.
+              Get practical priorities and next steps, with the reasons behind them.
             </p>
             <button type="button" onClick={onStart} className="btn-on-dark-primary mt-7">
-              Get Started
+              {START_LABEL}
             </button>
             <p className="mt-5 text-sm text-white/50">
-              {content.questions.length} questions &middot;{' '}
-              {setting('estimated_time', 'About 2 minutes')} &middot; Personalized
-              assessment
+              {STEP_COUNT} &middot; {setting('estimated_time', 'About 3 minutes')} &middot; No sign-up
+              needed
             </p>
             <p className="mx-auto mt-3 max-w-xl text-xs leading-5 text-white/50">
               {setting('privacy_note')}

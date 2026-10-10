@@ -51,7 +51,47 @@ describe('buildContent', () => {
     const { problems, content } = buildContent(baseTabs(), APPROVED)
     expect(problems).toEqual([])
     expect(content.questions.map((q) => q.code)).toEqual(['Q1', 'Q2'])
-    expect(content.blocks.title).toEqual({ A: 'Foundations', B: 'Growing {Q2}' })
+    expect(content.blocks.title).toEqual({
+      A: { heading: '', text: 'Foundations', why: '' },
+      B: { heading: '', text: 'Growing {Q2}', why: '' },
+    })
+    expect(content.questions[0]).toMatchObject({ input_type: 'Single', step: 1 })
+  })
+
+  it('supports Multi questions, which need a MULTI block for several selections', () => {
+    const tabs = baseTabs()
+    Object.assign(tabs.Questions[1], { 'Input type': 'Multi', Step: '2' })
+    tabs.Sections.push({ Section: 'mix', 'Label on result page': 'Mix', 'Written by question': 'Q2', 'Max characters': '', Required: 'Yes' })
+    tabs['Result Blocks'].push(
+      { Section: 'mix', 'Question code': 'Q2', 'Answer code': 'A', Text: 'Onboarding only', Status: 'Approved' },
+      { Section: 'mix', 'Question code': 'Q2', 'Answer code': 'B', Text: 'Compliance only', Status: 'Approved' },
+    )
+    expect(buildContent(tabs, APPROVED).problems).toEqual(['Result Blocks: no approved "mix" text for Q2-MULTI.'])
+
+    tabs['Result Blocks'].push({ Section: 'mix', 'Question code': 'Q2', 'Answer code': 'MULTI', Heading: 'Mix', Text: 'Both: {Q2}', 'Why this matters': 'Because', Status: 'Approved' })
+    const { problems, content } = buildContent(tabs, APPROVED)
+    expect(problems).toEqual([])
+    expect(content.blocks.mix.MULTI).toEqual({ heading: 'Mix', text: 'Both: {Q2}', why: 'Because' })
+  })
+
+  it('rejects a MULTI block for a Single question and an unknown input type', () => {
+    const tabs = baseTabs()
+    tabs.Questions[1]['Input type'] = 'Several'
+    tabs['Result Blocks'].push({ Section: 'title', 'Question code': 'Q1', 'Answer code': 'MULTI', Text: 'x', Status: 'Approved' })
+    expect(buildContent(tabs, APPROVED).problems).toEqual(
+      expect.arrayContaining([
+        'Questions: Q2 has unknown Input type "Several". Use Single or Multi.',
+        'Result Blocks: title for Q1-MULTI: MULTI blocks are only for Multi questions, and Q1 is Single.',
+      ]),
+    )
+  })
+
+  it('accepts a Remove rule with no text', () => {
+    const tabs = baseTabs()
+    tabs.Rules = [{ 'Rule ID': 'R1', 'When (all must match)': 'Q1=A AND Q2=B', Section: 'title', Mode: 'Remove', Text: '', Priority: '', Status: 'Approved' }]
+    const { problems, content } = buildContent(tabs, APPROVED)
+    expect(problems).toEqual([])
+    expect(content.rules[0]).toMatchObject({ mode: 'Remove', text: '' })
   })
 
   it('ignores drafts unless asked, and reports the missing approved block', () => {
@@ -75,7 +115,7 @@ describe('buildContent', () => {
         'Result Blocks: title for Q1-A: 31 characters, limit is 20.',
         'Result Blocks: title for Q1-A: placeholder {Q9} refers to an unknown question.',
         'Rules: R1: Q1 has no answer Z.',
-        'Rules: R1: Mode must be one of Replace, Add before, Add after.',
+        'Rules: R1: Mode must be one of Replace, Add before, Add after, Remove.',
       ]),
     )
   })

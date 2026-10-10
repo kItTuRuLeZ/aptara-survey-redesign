@@ -1,5 +1,6 @@
 import type { Answers, AssessmentResult, Question } from './types'
 import { setting } from '../content'
+import { selectedCodes } from './answers'
 
 /**
  * Where optional follow-up requests are sent. VITE_LEAD_ENDPOINT (set at
@@ -50,11 +51,13 @@ export function buildLeadPayload(
     Company: company,
     Message: contact.message.trim() || '(none)',
     'Result title': result.title,
-    Maturity: result.classification,
+    'Maturity stage (self-reported)': result.classification,
   }
+  // One field per question. A multi-select question lists every selection.
   for (const q of questions) {
-    const answer = q.answers.find((a) => a.code === answers[q.code])
-    if (answer) payload[q.name] = `${answer.category}: ${answer.text}`
+    const codes = selectedCodes(answers[q.code])
+    const picked = q.answers.filter((a) => codes.includes(a.code))
+    if (picked.length > 0) payload[q.name] = picked.map((a) => `${a.category}: ${a.text}`).join(' | ')
   }
   payload['Submitted at'] = new Date().toISOString()
   return payload

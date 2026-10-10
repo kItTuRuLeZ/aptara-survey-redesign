@@ -69,7 +69,10 @@ const ACCENT_PALETTE: AccentTokens[] = [
  * Questions take accents from the palette by their position in the content
  * sheet, cycling if there are more questions than colors.
  */
+/** One accent per step, so questions on the same screen share a colour. */
 export function questionAccent(code: QuestionCode): AccentTokens {
-  const index = content.questions.findIndex((q) => q.code === code)
+  const steps = [...new Set(content.questions.map((q) => q.step))].sort((a, b) => a - b)
+  const step = content.questions.find((q) => q.code === code)?.step
+  const index = step === undefined ? 0 : steps.indexOf(step)
   return ACCENT_PALETTE[Math.max(index, 0) % ACCENT_PALETTE.length]
 }

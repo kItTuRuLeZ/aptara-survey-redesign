@@ -5,7 +5,7 @@ interface HeaderProps {
 
 export function Header({ compact = false }: HeaderProps) {
   return (
-    <header className="bg-navy">
+    <header className="bg-navy print:hidden">
       <div
         className={`mx-auto flex max-w-5xl items-center justify-between px-5 sm:px-7 ${
           compact ? 'h-14' : 'h-[74px]'

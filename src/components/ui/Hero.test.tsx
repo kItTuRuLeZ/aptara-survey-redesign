@@ -56,13 +56,13 @@ describe('Hero', () => {
 
     // The copy is in the first render, without waiting for the lazy shader.
     const heading = screen.getByRole('heading', { level: 1 })
-    const cta = screen.getByRole('button', { name: /get started/i })
-    expect(heading).toHaveTextContent(/Understand your\s*L&D function\./)
+    const cta = screen.getByRole('button', { name: /start the assessment/i })
+    expect(heading).toHaveTextContent(/Discover your next\s*L&D priority\./)
 
     // Once it resolves, the very same elements are still mounted.
     await screen.findByTestId('hero-3d')
     expect(screen.getByRole('heading', { level: 1 })).toBe(heading)
-    expect(screen.getByRole('button', { name: /get started/i })).toBe(cta)
+    expect(screen.getByRole('button', { name: /start the assessment/i })).toBe(cta)
   })
 
   it('renders the static fallback when WebGL is unavailable, and the primary CTA still works', async () => {
@@ -74,7 +74,7 @@ describe('Hero', () => {
     render(<Hero onStart={onStart} />)
 
     expect(screen.queryByTestId('hero-3d')).not.toBeInTheDocument()
-    const cta = await screen.findByRole('button', { name: /get started/i })
+    const cta = await screen.findByRole('button', { name: /start the assessment/i })
     await userEvent.click(cta)
     expect(onStart).toHaveBeenCalledOnce()
   })
@@ -87,7 +87,7 @@ describe('Hero', () => {
     render(<Hero onStart={vi.fn()} />)
 
     expect(screen.queryByTestId('hero-3d')).not.toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /start the assessment/i })).toBeInTheDocument()
   })
 
   it('renders the static fallback when prefers-reduced-motion is set', async () => {
@@ -98,7 +98,7 @@ describe('Hero', () => {
     render(<Hero onStart={vi.fn()} />)
 
     expect(screen.queryByTestId('hero-3d')).not.toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /start the assessment/i })).toBeInTheDocument()
   })
 
   it('falls back to the static hero when the shader hero throws during render, and the CTA remains usable', async () => {
@@ -115,7 +115,7 @@ describe('Hero', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('hero-3d')).not.toBeInTheDocument()
     })
-    const cta = screen.getByRole('button', { name: /get started/i })
+    const cta = screen.getByRole('button', { name: /start the assessment/i })
     await userEvent.click(cta)
     expect(onStart).toHaveBeenCalledOnce()
 

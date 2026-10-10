@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Answers, AssessmentResult, Question } from '../lib/types'
 import { setting } from '../content'
 import { LeadForm } from '../components/LeadForm'
 import { buildLeadPayload, isLeadCaptureEnabled, submitLead } from '../lib/leads'
-import { AnswerChipStrip } from '../components/AnswerChipStrip'
 import { RecommendationPanel } from '../components/RecommendationPanel'
+import { ResponseSummary } from '../components/ResponseSummary'
+import { buildSummary, summaryToText } from '../lib/summary'
 import { useReducedMotion } from '../lib/useReducedMotion'
 
 interface ResultsScreenProps {
@@ -17,7 +18,7 @@ interface ResultsScreenProps {
 
 const leadCaptureEnabled = isLeadCaptureEnabled()
 
-const KNOWN_SECTIONS = ['title', 'situation', 'strengths', 'gap', 'risk', 'next30', 'next90']
+const sectionHeading = 'text-sm font-bold uppercase tracking-[0.17em] text-slate-600'
 
 export function ResultsScreen({
   result,
@@ -27,38 +28,27 @@ export function ResultsScreen({
 }: ResultsScreenProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const prefersReducedMotion = useReducedMotion()
-  const section = (id: string) => result.sections.find((s) => s.id === id)
-  const situation = section('situation')?.text ?? ''
-  const strengths = section('strengths')?.text ?? ''
-  const next30 = section('next30')?.text ?? ''
-  const next90 = section('next90')?.text ?? ''
-  const priorities = ['gap', 'risk']
-    .map(section)
-    .filter((s): s is NonNullable<typeof s> => Boolean(s?.text))
-  // Sections added in the content sheet beyond the built-in ones still show,
-  // as plain labelled paragraphs after the priorities.
-  const extraSections = result.sections.filter(
-    (s) => !KNOWN_SECTIONS.includes(s.id) && s.text,
-  )
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const fallbackRef = useRef<HTMLTextAreaElement>(null)
+  const summary = useMemo(() => buildSummary(result, questions, answers), [result, questions, answers])
+  const summaryText = useMemo(() => summaryToText(summary), [summary])
+
+  // Land on the result heading, so keyboard and screen-reader users start at the top.
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [])
 
   async function handleCopy() {
-    const text = [
-      result.title,
-      '',
-      `Maturity: ${result.classification}`,
-      situation,
-      '',
-      `Next 30 days: ${next30}`,
-      `Next 90 days: ${next90}`,
-    ].join('\n')
     try {
       // Some browsers, and pages embedded in an iframe, block the clipboard.
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(summaryText)
       setCopyState('copied')
+      setTimeout(() => setCopyState('idle'), 3000)
     } catch {
+      // Show the text so it can be copied by hand; stays until copied again.
       setCopyState('failed')
+      requestAnimationFrame(() => fallbackRef.current?.select())
     }
-    setTimeout(() => setCopyState('idle'), 3000)
   }
 
   return (
@@ -66,113 +56,98 @@ export function ResultsScreen({
       initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
-      className="mx-auto max-w-3xl px-5 py-10 sm:px-7 sm:py-14"
+      className="mx-auto max-w-3xl px-5 py-10 sm:px-7 sm:py-14 print:max-w-none print:px-0 print:py-0"
     >
-      {/* Diagnostic content — value delivered up front, before any secondary action */}
-      <p className="text-xs font-bold uppercase tracking-[0.17em] text-q5">
-        Assessment Complete
+      <p className="text-xs font-bold uppercase tracking-[0.17em] text-q5 print:text-slate-700">
+        {setting('survey_title', 'L&D Assessment')}: your result
       </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-navy sm:text-5xl">
-        {result.title}
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mt-3 text-3xl font-semibold tracking-tight text-navy outline-none sm:text-4xl"
+      >
+        {summary.title}
       </h1>
+      {summary.scope && (
+        <p className="mt-2 hidden text-sm text-slate-700 print:block">{summary.scope}</p>
+      )}
 
-      <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-q5/30 bg-q5-tint px-4 py-1.5">
-        <span className="h-1.5 w-1.5 rounded-full bg-q5" aria-hidden="true" />
-        <span className="text-xs font-bold uppercase tracking-wide text-q5">
-          Maturity: {result.classification}
+      <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-q5/30 bg-q5-tint px-4 py-1.5 print:border-slate-400 print:bg-white">
+        <span className="h-1.5 w-1.5 rounded-full bg-q5 print:hidden" aria-hidden="true" />
+        <span className="text-xs font-bold uppercase tracking-wide text-q5 print:text-slate-800">
+          Self-reported stage: {summary.stage}
         </span>
       </div>
 
-      <p className="mt-5 max-w-2xl text-xl leading-8 text-navy">{situation}</p>
+      <p className="mt-5 max-w-2xl text-lg leading-8 text-navy">{summary.situation}</p>
 
-      {/* Three response-derived signals */}
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        {result.signals.map((signal) => (
-          <div key={signal.code} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
-              {signal.label}
-            </p>
-            <p className="mt-1 text-base font-semibold text-navy">{signal.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {strengths && (
-        <p className="mt-8 text-base leading-7 text-slate-600">
-          <span className="font-semibold text-navy">A strength working in your favor: </span>
-          {strengths}
-        </p>
-      )}
-
-      {/* Top two recommended priorities */}
-      <div className="mt-12">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-          Top Priorities
-        </p>
-        <div className="mt-4 grid gap-6 sm:grid-cols-2">
-          {priorities.map((priority, i) => (
-            <div key={priority.id} className="rounded-xl border border-slate-200 bg-white p-6">
+      <section aria-labelledby="priorities-heading" className="mt-12">
+        <h2 id="priorities-heading" className={sectionHeading}>
+          Top priorities
+        </h2>
+        <ol className="mt-4 grid gap-4">
+          {summary.priorities.map((p, i) => (
+            <li
+              key={p.id}
+              className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-6 print:p-4"
+            >
               <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                 Priority {i + 1}
               </p>
-              <p className="mt-1 text-lg font-semibold text-navy">{priority.label}</p>
-              <p className="mt-2 text-base leading-7 text-slate-600">{priority.text}</p>
-            </div>
+              <h3 className="mt-1 text-lg font-semibold text-navy">{p.heading}</h3>
+              <p className="mt-2 text-base leading-7 text-slate-700">{p.text}</p>
+              {p.why && (
+                <p className="mt-3 border-t border-slate-100 pt-3 text-sm leading-6 text-slate-600">
+                  <span className="font-semibold text-navy">Why this matters for you: </span>
+                  {p.why}
+                </p>
+              )}
+            </li>
           ))}
-        </div>
-      </div>
+        </ol>
+      </section>
 
-      {extraSections.map((extra) => (
-        <div key={extra.id} className="mt-12">
-          <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-            {extra.label}
-          </p>
-          <p className="mt-3 text-base leading-7 text-slate-600">{extra.text}</p>
-        </div>
-      ))}
-
-      {/* Practical next steps */}
-      <div className="mt-12 border-t border-slate-200 pt-10">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-          What To Do Next
-        </p>
-        <div className="mt-4">
-          <RecommendationPanel next30={next30} next90={next90} />
-        </div>
-      </div>
-
-      {/* Methodology — plain-language, clearly diagnostic rather than marketing */}
-      <p className="mt-10 border-t border-slate-200 pt-6 text-sm leading-6 text-slate-600">
-        <span className="font-semibold text-slate-700">How this was generated: </span>
-        {setting(
-          'result_methodology',
-          'Your result is assembled from reviewed guidance for each of your answers. Treat it as a diagnostic starting point.',
-        )}
-      </p>
-
-      {/* Supporting detail */}
-      <div className="mt-8">
-        <p className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-          Your Responses
-        </p>
-        <div className="mt-3">
-          <AnswerChipStrip questions={questions} answers={answers} />
-        </div>
-      </div>
-
-      {/* Utility actions — visually separated from the diagnostic content above */}
-      {leadCaptureEnabled && (
-        <div className="mt-12">
-          <LeadForm
-            onSubmit={(contact) =>
-              submitLead(buildLeadPayload(contact, answers, result, questions))
-            }
-          />
-        </div>
+      {summary.context.length > 0 && (
+        <section aria-labelledby="context-heading" className="mt-12">
+          <h2 id="context-heading" className={sectionHeading}>
+            Tailored to how you work
+          </h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 print:grid-cols-1">
+            {summary.context.map((c) => (
+              <div key={c.id} className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-6 print:p-4">
+                <h3 className="text-base font-semibold text-navy">{c.label}</h3>
+                <p className="mt-2 text-base leading-7 text-slate-700">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 border-t border-slate-200 pt-7">
-        <button type="button" onClick={handleCopy} className="btn-secondary px-5 py-2.5">
+      <section aria-labelledby="next-heading" className="mt-12 border-t border-slate-200 pt-10">
+        <h2 id="next-heading" className={sectionHeading}>
+          What to do next
+        </h2>
+        <div className="mt-4">
+          <RecommendationPanel next30={summary.next30} next90={summary.next90} />
+        </div>
+      </section>
+
+      <section aria-labelledby="responses-heading" className="mt-12 break-inside-avoid">
+        <h2 id="responses-heading" className={sectionHeading}>
+          Your responses
+        </h2>
+        <div className="mt-3">
+          <ResponseSummary responses={summary.responses} />
+        </div>
+      </section>
+
+      <p className="mt-8 border-t border-slate-200 pt-6 text-sm leading-6 text-slate-600">
+        <span className="font-semibold text-slate-700">How this result was generated: </span>
+        {summary.methodology}
+      </p>
+
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-7 print:hidden">
+        <button type="button" onClick={handleCopy} className="btn-secondary min-h-11 px-5 py-2.5">
           {copyState === 'copied' && (
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-q4" aria-hidden="true">
               <path
@@ -184,24 +159,51 @@ export function ResultsScreen({
               />
             </svg>
           )}
-          <span aria-live="polite">
-            {copyState === 'copied'
-              ? 'Copied to clipboard'
-              : copyState === 'failed'
-                ? "Couldn't copy. Try again"
-                : 'Copy summary'}
-          </span>
+          {copyState === 'copied' ? 'Copied' : 'Copy summary'}
+        </button>
+        <button type="button" onClick={() => window.print()} className="btn-secondary min-h-11 px-5 py-2.5">
+          Print / Save as PDF
         </button>
         <button
           type="button"
           onClick={onRestart}
-          className="btn border border-q5/30 px-5 py-2.5 text-q5 hover:-translate-y-0.5 hover:border-q5 hover:bg-q5-tint hover:shadow-sm"
+          className="btn min-h-11 border border-q5/30 px-5 py-2.5 text-q5 hover:-translate-y-0.5 hover:border-q5 hover:bg-q5-tint hover:shadow-sm"
         >
-          &larr; Restart Assessment
+          Start over
         </button>
       </div>
+      <p role="status" className="mt-3 text-center text-sm text-slate-700 print:hidden">
+        {copyState === 'copied' && 'Summary copied to your clipboard.'}
+        {copyState === 'failed' &&
+          "Your browser didn't allow copying. The summary is selected below, so you can copy it yourself."}
+      </p>
+      {copyState === 'failed' && (
+        <div className="mt-2 print:hidden">
+          <label htmlFor="summary-text" className="block text-sm font-semibold text-navy">
+            Your summary
+          </label>
+          <textarea
+            id="summary-text"
+            ref={fallbackRef}
+            readOnly
+            rows={12}
+            value={summaryText}
+            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white p-3 font-mono text-sm text-navy"
+          />
+        </div>
+      )}
 
-      <p className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600">
+      {leadCaptureEnabled && (
+        <div className="mt-12 print:hidden">
+          <LeadForm
+            onSubmit={(contact) =>
+              submitLead(buildLeadPayload(contact, answers, result, questions))
+            }
+          />
+        </div>
+      )}
+
+      <p className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600 print:hidden">
         {setting('privacy_note')}
       </p>
     </motion.div>

@@ -82,3 +82,36 @@ body {
     transform: none !important;
   }
 }
+
+/*
+ * Print / Save as PDF: dark text on white, no navigation, buttons, decorative
+ * backgrounds or the follow-up form (those carry print:hidden). Long content
+ * flows across pages; small cards avoid splitting where they can.
+ */
+@media print {
+  @page {
+    margin: 18mm 16mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #0f172a;
+    font-size: 11pt;
+  }
+  * {
+    box-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  p,
+  li,
+  dd {
+    orphans: 3;
+    widows: 3;
+  }
+}

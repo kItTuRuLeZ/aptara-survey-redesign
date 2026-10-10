@@ -1,39 +1,33 @@
-import type { Question, QuestionCode } from '../lib/types'
+import type { QuestionCode } from '../lib/types'
 import { questionAccent } from '../theme/tokens'
 
 interface ProgressStepsProps {
-  questions: Question[]
-  currentCode: QuestionCode
+  /** Number of steps (screens), not questions. */
+  total: number
   currentIndex: number
+  /** Short name of the current step. */
+  name: string
+  /** A question on the current step, for its accent colour. */
+  accentCode: QuestionCode
 }
 
 /**
- * One line of progress text plus a bar. The bar shows questions answered
- * before this one, so the last question doesn't read as already complete.
+ * One line of progress text plus a bar. The bar shows steps completed
+ * before this one, so the last step doesn't read as already complete.
  */
-export function ProgressSteps({
-  questions,
-  currentCode,
-  currentIndex,
-}: ProgressStepsProps) {
-  const current = questions.find((q) => q.code === currentCode)
-  const accent = questionAccent(currentCode)
-  const total = questions.length
+export function ProgressSteps({ total, currentIndex, name, accentCode }: ProgressStepsProps) {
+  const accent = questionAccent(accentCode)
   const isLast = currentIndex === total - 1
   const percent = Math.round((currentIndex / total) * 100)
-  const label = isLast ? 'Final question' : `Question ${currentIndex + 1} of ${total}`
+  const label = isLast ? 'Final step' : `Step ${currentIndex + 1} of ${total}`
 
   return (
     <div>
       <p className="text-sm font-semibold text-slate-600">
         {label}
-        {current && (
-          <>
-            <span aria-hidden="true"> &middot; </span>
-            <span className="sr-only">: </span>
-            {current.name}
-          </>
-        )}
+        <span aria-hidden="true"> &middot; </span>
+        <span className="sr-only">: </span>
+        {name}
       </p>
       <div
         role="progressbar"
@@ -41,7 +35,7 @@ export function ProgressSteps({
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={currentIndex}
-        aria-valuetext={`${currentIndex} of ${total} questions answered`}
+        aria-valuetext={`${currentIndex} of ${total} steps complete`}
         className="mt-2 h-1.5 w-full rounded-full bg-slate-200"
       >
         <div

@@ -10,17 +10,23 @@ interface QuestionOptionProps {
   onSelect: (code: AnswerCode) => void
   disabled?: boolean
   error?: boolean
+  /** 'checkbox' for a select-all-that-apply question. */
+  type?: 'radio' | 'checkbox'
 }
 
 /**
- * A real <input type="radio"> grouped by `name={questionCode}`, visually
+ * A real <input type="radio"> (or "checkbox" for select-all-that-apply)
+ * grouped by `name={questionCode}`, visually
  * hidden inside a clickable <label>. This gets correct native radio
  * semantics for free — Tab enters/exits the group as a single stop, arrow
  * keys move the selection between options, Space toggles — rather than
  * hand-rolling roving tabindex + keydown handling on a role="radio" button.
  * Visual states (hover/focus-visible/selected/disabled/error) are driven by
  * real CSS pseudo-classes via Tailwind's has-[]/peer variants wherever the
- * state is truly native; decorative accent coloring below still reads the
+ * state is truly native. Checkboxes toggle independently with Space and show
+ * a square indicator, radios a round one, so the difference isn't colour
+ * alone. As with radios,
+ * decorative accent coloring below still reads the
  * `selected` prop directly since it's kept in lockstep with the input's own
  * checked state.
  */
@@ -31,6 +37,7 @@ export function QuestionOption({
   onSelect,
   disabled = false,
   error = false,
+  type = 'radio',
 }: QuestionOptionProps) {
   const accent = questionAccent(questionCode)
   const inputId = `${questionCode}-${answer.code}`
@@ -52,7 +59,7 @@ export function QuestionOption({
       }`}
     >
       <input
-        type="radio"
+        type={type}
         id={inputId}
         name={questionCode}
         value={answer.code}
@@ -90,9 +97,11 @@ export function QuestionOption({
       </span>
 
       <span
-        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-150"
+        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center border transition-all duration-150 ${
+          type === 'checkbox' ? 'rounded' : 'rounded-full'
+        }`}
         style={{
-          borderColor: selected ? accent.accent : '#e2e8f0',
+          borderColor: selected ? accent.accent : '#94a3b8',
           backgroundColor: selected ? accent.accent : 'transparent',
         }}
         aria-hidden="true"
