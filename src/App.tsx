@@ -118,6 +118,8 @@ function App() {
   }
 
   function handleRestart() {
+    // Drop the ?mock= review shortcut so a refresh doesn't jump back to it.
+    if (mockKey) window.history.replaceState(null, '', window.location.pathname)
     setAnswers({})
     setCurrentIndex(0)
     setResult(null)
@@ -128,7 +130,7 @@ function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <Header compact={screen === 'question' || screen === 'processing'} />
       <main className="flex-1">
         {questionsError && (
           <p className="mx-auto mt-10 max-w-md text-center text-sm text-q3">

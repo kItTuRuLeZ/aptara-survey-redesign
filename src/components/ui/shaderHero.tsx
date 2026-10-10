@@ -68,13 +68,13 @@ export function ShaderHero({ onStart }: ShaderHeroProps) {
           </motion.div>
 
           <motion.h1
-            className="mt-6 text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl"
+            className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white min-[375px]:text-5xl sm:text-6xl lg:text-7xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <span
-              className="block text-2xl font-light tracking-wide text-white/80 sm:text-3xl"
+              className="block text-xl font-light tracking-wide text-white/80 min-[375px]:text-2xl sm:text-3xl"
               style={{
                 background: 'linear-gradient(135deg, #ffffff 0%, #12859B 50%, #ffffff 100%)',
                 WebkitBackgroundClip: 'text',
