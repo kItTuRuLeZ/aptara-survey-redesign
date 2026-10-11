@@ -1,6 +1,6 @@
 # How results are chosen
 
-The result is assembled from the content sheet (`content/*.csv`, built into
+The result is assembled from the content workbook (`content/aptara-survey-content.xlsx`, built into
 `src/content/content.json` by `npm run content`). Nothing is generated at run
 time: the same answers always give the same result. The engine is
 `src/lib/composeResult.ts`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildContent, parseCondition, parseCsv, toRecords } from './build-content.mjs'
+import { buildContent, cellText, parseCondition, parseCsv, toRecords } from './build-content.mjs'
 
 const APPROVED = { publishable: new Set(['Approved']) }
 
@@ -33,6 +33,12 @@ describe('parseCsv / toRecords', () => {
     expect(toRecords(parseCsv(csv), 'Key')).toEqual([
       { Key: 'hello', Value: 'a, "quoted"\nvalue', Status: 'Approved' },
     ])
+  })
+})
+
+describe('cellText', () => {
+  it('reads Excel cells as plain text', () => {
+    expect([1, 2.5, null, undefined, 'Approved', true].map(cellText)).toEqual(['1', '2.5', '', '', 'Approved', 'true'])
   })
 })
 
