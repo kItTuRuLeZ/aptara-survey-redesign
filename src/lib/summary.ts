@@ -45,11 +45,10 @@ export function buildSummary(
   const section = (id: string) => result.sections.find((s) => s.id === id)
   const text = (id: string) => section(id)?.text ?? ''
 
-  // Team and sourcing read as one paragraph under one label.
-  const capacity = [text('team'), text('sourcing')].filter(Boolean).join(' ')
+  // The team paragraph is written from team size and sourcing together.
   const context = [
     { id: 'delivery', label: section('delivery')?.label ?? 'Your delivery mix', text: text('delivery') },
-    { id: 'capacity', label: section('team')?.label ?? 'Your team and capacity', text: capacity },
+    { id: 'capacity', label: section('team')?.label ?? 'Your team and capacity', text: text('team') },
   ].filter((c) => c.text)
 
   return {

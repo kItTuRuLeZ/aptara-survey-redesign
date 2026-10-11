@@ -81,6 +81,43 @@ describe('composeResult engine', () => {
     expect(title).toMatchObject({ text: 'Before. High After.', heading: 'Head A' })
   })
 
+  it('applies only the highest-priority Add rule of each mode', () => {
+    const c = {
+      ...fixture,
+      rules: [
+        rule({ id: 'a1', when: [{ question: 'Q1', answer: 'A' }], section: 'extra', mode: 'Add after', text: 'General.', priority: 1 }),
+        rule({ id: 'a2', when: [{ question: 'Q2', answer: 'B' }], section: 'extra', mode: 'Add after', text: 'Specific.', priority: 5 }),
+      ],
+    }
+    expect(composeResult(c, { Q1: 'A', Q2: ['B'] }).sections.find((s) => s.id === 'extra')?.text).toBe('Extra A Specific.')
+    expect(composeResult(c, { Q1: 'A', Q2: ['A'] }).sections.find((s) => s.id === 'extra')?.text).toBe('Extra A General.')
+  })
+
+  it('shows priority cards with the same action once, adding the merge note to the reason', () => {
+    const c: SurveyContent = {
+      ...fixture,
+      sections: [
+        ...fixture.sections,
+        { id: 'p1', label: 'Priority', owner: 'Q1', required: true },
+        { id: 'p2', label: 'Priority', owner: 'Q2', required: true, merge_note: 'Also fits {Q2}.' },
+      ],
+      blocks: {
+        ...fixture.blocks,
+        p1: { A: { ...block('Do X', 'X', 'Because A.'), action: 'x' }, B: block('B'), C: block('C') },
+        p2: {
+          A: { ...block('Do X again', 'X again', 'Because goal.'), action: 'x' },
+          B: { ...block('Do Y', 'Y'), action: 'y' },
+          C: block('C'),
+          MULTI: block('M'),
+        },
+      },
+    }
+    const merged = composeResult(c, { Q1: 'A', Q2: ['A'] }).sections
+    expect(merged.map((s) => s.id)).not.toContain('p2')
+    expect(merged.find((s) => s.id === 'p1')?.why).toBe('Because A. Also fits Q2A.')
+    expect(composeResult(c, { Q1: 'A', Q2: ['B'] }).sections.map((s) => s.id)).toContain('p2')
+  })
+
   it('removes a section when a Remove rule matches', () => {
     const c = { ...fixture, rules: [rule({ id: 'x', when: [{ question: 'Q1', answer: 'B' }], section: 'extra', mode: 'Remove' })] }
     expect(composeResult(c, { Q1: 'B', Q2: ['A'] }).sections.map((s) => s.id)).toEqual(['title', 'mix'])
@@ -112,7 +149,13 @@ function* everyCombination(): Generator<Answers> {
             for (const q6 of codes('Q6')) yield { Q1: q1, Q2: q2, Q3: q3, Q4: q4, Q5: q5, Q6: q6 }
 }
 
-const REQUIRED = ['title', 'situation', 'priority_challenge', 'priority_process', 'delivery', 'team', 'sourcing', 'next30', 'next90']
+const REQUIRED = ['title', 'situation', 'priority_challenge', 'delivery', 'team', 'next30', 'next90']
+
+/** The action tag of the block behind a priority card, for these answers. */
+const actionOf = (sectionId: string, answers: Answers) => {
+  const owner = content.sections.find((s) => s.id === sectionId)!.owner
+  return content.blocks[sectionId]?.[answers[owner] as string]?.action
+}
 
 describe('composeResult with the content sheet', () => {
   it('gives every answer combination a complete, consistent result', () => {
@@ -135,6 +178,9 @@ describe('composeResult with the content sheet', () => {
       if (priorities.length < 2) problems.push(`${where}: only ${priorities.length} priorities`)
       if (new Set(priorities.map((p) => p.heading)).size !== priorities.length) problems.push(`${where}: duplicate priority`)
       if (priorities.some((p) => !p.heading || !p.why)) problems.push(`${where}: priority without heading or why`)
+      const actions = priorities.map((p) => actionOf(p.id, answers))
+      if (actions.some((a) => !a) || new Set(actions).size !== actions.length) problems.push(`${where}: repeated or missing action`)
+      if (/listed once|dedup|fallback|rule/i.test(JSON.stringify(r.sections))) problems.push(`${where}: implementation wording`)
 
       // The title names the first priority.
       const first = r.sections.find((s) => s.id === 'priority_challenge')
@@ -155,13 +201,24 @@ describe('composeResult with the content sheet', () => {
     expect(n).toBe(4 * 5 * 31 * 4 * 3 * 5)
   }, 60_000)
 
-  it('shows the goal priority only when it differs from the challenge priority', () => {
-    const same = composeResult(content, { Q1: 'B', Q2: 'B', Q3: ['A'], Q4: 'B', Q5: 'A', Q6: 'A' })
+  it('merges the goal priority into the challenge when they share an action, and says why', () => {
+    const same = composeResult(content, { Q1: 'B', Q2: 'C', Q3: ['A'], Q4: 'B', Q5: 'A', Q6: 'D' })
     expect(same.sections.map((s) => s.id)).not.toContain('priority_goal')
-    expect(same.sections.find((s) => s.id === 'priority_challenge')!.text).toMatch(/listed once/)
+    expect(same.sections.find((s) => s.id === 'priority_challenge')!.why).toMatch(/also supports the business goal/)
 
-    const different = composeResult(content, { Q1: 'B', Q2: 'B', Q3: ['A'], Q4: 'B', Q5: 'A', Q6: 'E' })
+    const different = composeResult(content, { Q1: 'B', Q2: 'C', Q3: ['A'], Q4: 'B', Q5: 'A', Q6: 'E' })
     expect(different.sections.map((s) => s.id)).toContain('priority_goal')
+  })
+
+  it('writes one team paragraph from a rule for every team size and sourcing pair', () => {
+    const teamRules = content.rules.filter((r) => r.section === 'team' && r.mode === 'Replace')
+    for (const q4 of codes('Q4'))
+      for (const q5 of codes('Q5')) {
+        const answers = { Q1: 'B', Q2: 'A', Q3: ['A'], Q4: q4, Q5: q5, Q6: 'C' }
+        const team = composeResult(content, answers).sections.find((s) => s.id === 'team')!.text
+        expect(teamRules.map((r) => r.text), `${q4}+${q5}`).toContain(team)
+      }
+    expect(new Set(teamRules.map((r) => r.text)).size).toBe(teamRules.length)
   })
 })
 
@@ -175,8 +232,8 @@ const text = (answers: Answers) =>
 describe('scenarios from the improvement brief', () => {
   it('foundational, small internal team, live delivery, capacity goal: practical, no eLearning assumed', () => {
     const t = text({ Q1: 'A', Q2: 'B', Q3: ['A'], Q4: 'B', Q5: 'A', Q6: 'A' })
-    expect(t).toMatch(/intake process/i)
-    expect(t).toMatch(/small team/i)
+    expect(t).toMatch(/one shared backlog/i)
+    expect(t).toMatch(/limited capacity/i)
     expect(t).not.toMatch(/eLearning/)
   })
 
@@ -184,7 +241,8 @@ describe('scenarios from the improvement brief', () => {
     const t = text({ Q1: 'C', Q2: 'A', Q3: ['A', 'C', 'D'], Q4: 'D', Q5: 'B', Q6: 'C' })
     expect(t).toContain('In-person ILT, Self-paced eLearning and Microlearning')
     expect(t).toMatch(/highest-use eLearning/)
-    expect(t).toMatch(/review ownership and quality standards across internal teams and partners/)
+    expect(t).toMatch(/agree shared quality standards, assign review and sign-off owners/)
+    expect(t.match(/quality standards/g)).toHaveLength(1)
     expect(t).not.toMatch(/relies? (only|mainly|exclusively) on/i)
   })
 
@@ -196,14 +254,50 @@ describe('scenarios from the improvement brief', () => {
 
   it('no dedicated team, mainly external delivery: ownership and partner coordination, no internal production team', () => {
     const t = text({ Q1: 'B', Q2: 'D', Q3: ['C', 'E'], Q4: 'A', Q5: 'C', Q6: 'C' })
-    expect(t).toMatch(/name an internal owner/)
-    expect(t).toMatch(/sign-off inside your organization/)
+    expect(t.match(/internal owner/gi)).toHaveLength(1)
+    expect(t).toMatch(/brief partners and approve quality/)
     expect(t).not.toMatch(/your (internal )?(team|designers) (build|produce)/i)
   })
 
   it('small internal team with external partners is a valid hybrid profile', () => {
     const t = text({ Q1: 'B', Q2: 'B', Q3: ['B'], Q4: 'B', Q5: 'B', Q6: 'B' })
     expect(t).toMatch(/small team/i)
-    expect(t).toMatch(/your own people and partners/)
+    expect(t).toMatch(/which work partners take on/)
+  })
+
+  it('no dedicated team, mainly in-house: a valid profile, with learning handled by other roles', () => {
+    const t = text({ Q1: 'B', Q2: 'A', Q3: ['E'], Q4: 'A', Q5: 'A', Q6: 'B' })
+    expect(t).toMatch(/people in other roles/)
+  })
+})
+
+describe('regression profiles from the follow-up review', () => {
+  const sectionsFor = (answers: Answers) => composeResult(content, answers).sections
+  const priorities = (answers: Answers) => sectionsFor(answers).filter((s) => s.id.startsWith('priority_'))
+
+  it('established mixed delivery: one team paragraph, every method named', () => {
+    const s = sectionsFor({ Q1: 'C', Q2: 'A', Q3: ['A', 'C', 'D'], Q4: 'D', Q5: 'B', Q6: 'C' })
+    expect(s.find((x) => x.id === 'team')!.text).toBe(
+      'With a large team working alongside partners, agree shared quality standards, assign review and sign-off owners, and maintain one view of work in progress.',
+    )
+    expect(s.find((x) => x.id === 'delivery')!.text).toContain('In-person ILT, Self-paced eLearning and Microlearning')
+  })
+
+  it('optimizing impact: measurement-focused delivery advice and a natural merged reason', () => {
+    const answers = { Q1: 'D', Q2: 'E', Q3: ['C'], Q4: 'C', Q5: 'A', Q6: 'E' }
+    const delivery = sectionsFor(answers).find((x) => x.id === 'delivery')!.text
+    expect(delivery).toMatch(/application or performance measure/)
+    expect(delivery).toMatch(/Completions alone won/)
+    expect(delivery).not.toMatch(/outdated|obsolete|review date/)
+    const p = priorities(answers)
+    expect(p.map((x) => x.heading)).toEqual(['Connect learning to business measures', 'Scale what the evidence supports'])
+    expect(p[0].why).toMatch(/also supports the business goal you chose/)
+  })
+
+  it('foundational partner delivery: intake and reuse as two distinct priorities, ownership once', () => {
+    const answers = { Q1: 'A', Q2: 'B', Q3: ['A'], Q4: 'A', Q5: 'C', Q6: 'B' }
+    expect(priorities(answers).map((x) => x.heading)).toEqual(['Protect team capacity', 'Shorten development and update time'])
+    expect(priorities(answers)[0].why).toMatch(/fits the stage you described \(Foundational\)/)
+    expect(text(answers).match(/internal owner/gi)).toHaveLength(1)
   })
 })

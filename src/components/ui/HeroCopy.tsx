@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { HERO_COPY, HERO_STATS } from './heroContent'
 import { renderHeroLine } from './heroText'
+import { ExampleResultCard } from './ExampleResultCard'
 
 interface HeroCopyProps {
   onStart: () => void
@@ -41,7 +42,8 @@ export function HeroCopy({ onStart, animate }: HeroCopyProps) {
         </defs>
       </svg>
 
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto grid w-full max-w-4xl items-center gap-12 lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:gap-14">
+        <div className="min-w-0">
         <motion.div
           className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm"
           style={{ filter: 'url(#glass-effect)' }}
@@ -54,7 +56,7 @@ export function HeroCopy({ onStart, animate }: HeroCopyProps) {
         </motion.div>
 
         <motion.h1
-          className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white min-[375px]:text-5xl sm:text-6xl lg:text-7xl"
+          className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white min-[375px]:text-5xl sm:text-6xl xl:text-7xl"
           {...enter(0.4, 30)}
         >
           <span
@@ -95,6 +97,11 @@ export function HeroCopy({ onStart, animate }: HeroCopyProps) {
               {stat}
             </span>
           ))}
+        </motion.div>
+        </div>
+
+        <motion.div {...enter(1.1)}>
+          <ExampleResultCard />
         </motion.div>
       </div>
     </div>

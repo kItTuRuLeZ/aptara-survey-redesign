@@ -49,12 +49,16 @@ export interface ContentSection {
   label: string
   owner: QuestionCode
   required: boolean
+  /** Added to the reason of an earlier priority card when this section's card is merged into it. */
+  merge_note?: string
 }
 
 export interface ContentBlock {
   heading: string
   text: string
   why: string
+  /** The central action of a priority card; cards sharing one are shown once. */
+  action?: string
 }
 
 export interface ContentRule {

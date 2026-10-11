@@ -27,6 +27,7 @@ const TABS = ['Settings', 'Questions', 'Answers', 'Sections', 'Result Blocks', '
 const RULE_MODES = ['Replace', 'Add before', 'Add after', 'Remove']
 const INPUT_TYPES = ['Single', 'Multi']
 const MULTI = 'MULTI'
+const ACTION_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const RESULT_ROLES = ['Classification', 'Signal', 'None']
 
 const includeDrafts = process.argv.includes('--include-drafts')
@@ -208,6 +209,13 @@ export function buildContent(tabs, { publishable }) {
     if (q.answers.length < 2) problems.push(`Answers: ${q.code} needs at least two approved answers.`)
   }
 
+  // Placeholders like {Q1} or {Q1.text} must point at a real question.
+  const checkPlaceholders = (text, label) => {
+    for (const [, code] of text.matchAll(/\{([A-Za-z0-9_]+)(?:\.text)?\}/g)) {
+      if (!qByCode.has(code)) problems.push(`${label}: placeholder {${code}} refers to an unknown question.`)
+    }
+  }
+
   // Sections (structural, so every row counts regardless of status)
   const sections = tabs.Sections.map((r) => ({
     id: r.Section,
@@ -215,17 +223,12 @@ export function buildContent(tabs, { publishable }) {
     owner: r['Written by question'],
     max_chars: Number(r['Max characters']) || Infinity,
     required: r.Required.toLowerCase() === 'yes',
+    merge_note: r['Merge note'] ?? '',
   }))
   const sectionById = new Map(sections.map((s) => [s.id, s]))
   for (const s of sections) {
+    checkPlaceholders(s.merge_note, `Sections: "${s.id}" merge note`)
     if (!qByCode.has(s.owner)) problems.push(`Sections: "${s.id}" is written by ${s.owner}, which doesn't exist or isn't approved.`)
-  }
-
-  // Placeholders like {Q1} or {Q1.text} must point at a real question.
-  const checkPlaceholders = (text, label) => {
-    for (const [, code] of text.matchAll(/\{([A-Za-z0-9_]+)(?:\.text)?\}/g)) {
-      if (!qByCode.has(code)) problems.push(`${label}: placeholder {${code}} refers to an unknown question.`)
-    }
   }
 
   // Result blocks
@@ -250,10 +253,15 @@ export function buildContent(tabs, { publishable }) {
     for (const field of ['Heading', 'Text', 'Why this matters']) checkPlaceholders(r[field] ?? '', label)
     blocks[s.id] ??= {}
     if (blocks[s.id][r['Answer code']]) problems.push(`${label}: there are two approved blocks.`)
+    const action = (r.Action ?? '').trim()
+    if (action && !ACTION_PATTERN.test(action)) {
+      problems.push(`${label}: Action "${action}" should be lowercase words joined by hyphens, like intake-prioritization.`)
+    }
     blocks[s.id][r['Answer code']] = {
       heading: r.Heading ?? '',
       text: r.Text,
       why: r['Why this matters'] ?? '',
+      ...(action ? { action } : {}),
     }
   })
   for (const s of sections.filter((x) => x.required)) {
@@ -304,7 +312,7 @@ export function buildContent(tabs, { publishable }) {
       includes_drafts: publishable.has('In review'),
       settings,
       questions,
-      sections: sections.map((s) => ({ id: s.id, label: s.label, owner: s.owner, required: s.required })),
+      sections: sections.map((s) => ({ id: s.id, label: s.label, owner: s.owner, required: s.required, merge_note: s.merge_note })),
       blocks,
       rules,
     },

@@ -6,6 +6,7 @@ import { LeadForm } from '../components/LeadForm'
 import { buildLeadPayload, isLeadCaptureEnabled, submitLead } from '../lib/leads'
 import { RecommendationPanel } from '../components/RecommendationPanel'
 import { ResponseSummary } from '../components/ResponseSummary'
+import { StartOverButton } from '../components/StartOverButton'
 import { buildSummary, summaryToText } from '../lib/summary'
 import { useReducedMotion } from '../lib/useReducedMotion'
 
@@ -164,13 +165,13 @@ export function ResultsScreen({
         <button type="button" onClick={() => window.print()} className="btn-secondary min-h-11 px-5 py-2.5">
           Print / Save as PDF
         </button>
-        <button
-          type="button"
-          onClick={onRestart}
+        <StartOverButton
+          hasProgress
+          onConfirm={onRestart}
           className="btn min-h-11 border border-q5/30 px-5 py-2.5 text-q5 hover:-translate-y-0.5 hover:border-q5 hover:bg-q5-tint hover:shadow-sm"
         >
           Start over
-        </button>
+        </StartOverButton>
       </div>
       <p role="status" className="mt-3 text-center text-sm text-slate-700 print:hidden">
         {copyState === 'copied' && 'Summary copied to your clipboard.'}

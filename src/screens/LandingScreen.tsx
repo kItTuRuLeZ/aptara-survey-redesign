@@ -36,15 +36,6 @@ const HOW_IT_WORKS = [
   },
 ]
 
-// Illustrative only, and labelled as such on the page.
-const EXAMPLE = {
-  stage: 'Developing',
-  challenge: 'Content upkeep',
-  goal: 'Quality and consistency',
-  title: 'Your next L&D priority: modernize priority content',
-  priorities: ['Modernize priority content', 'Raise quality and consistency', 'Standardize what already works'],
-}
-
 function FadeIn({
   children,
   delay = 0,
@@ -152,61 +143,8 @@ export function LandingScreen({ onStart }: LandingScreenProps) {
       </div>
 
       <div className="mx-auto max-w-4xl px-5 pb-20 sm:px-7 sm:pb-28">
-        {/* Example result: clearly labelled so it can't be mistaken for the visitor's own */}
-        <FadeIn className="mt-20">
-          <h2 className="text-xs font-bold uppercase tracking-[0.17em] text-slate-600">
-            Example result
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            An illustration of what you&apos;ll receive. It is not based on your answers.
-          </p>
-          <figure
-            aria-label="Example result, for illustration only"
-            className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60"
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <span className="flex gap-1.5" aria-hidden="true">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-              </span>
-              <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-slate-700">
-                Example
-              </span>
-            </div>
-            <div className="p-7 sm:p-9">
-              <p className="text-xl font-semibold text-navy sm:text-2xl">{EXAMPLE.title}</p>
-              <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4">
-                <div>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Self-reported stage</dt>
-                  <dd className="mt-1 text-lg font-semibold text-q1-ink">{EXAMPLE.stage}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Main challenge</dt>
-                  <dd className="mt-1 text-lg font-semibold text-q2-ink">{EXAMPLE.challenge}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-bold uppercase tracking-wide text-slate-600">Business goal</dt>
-                  <dd className="mt-1 text-lg font-semibold text-q5">{EXAMPLE.goal}</dd>
-                </div>
-              </dl>
-              <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-600">Top priorities</p>
-              <ol className="mt-2 grid gap-1.5 text-base text-slate-700">
-                {EXAMPLE.priorities.map((p, i) => (
-                  <li key={p} className="flex items-center gap-2.5">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-q4-tint text-xs font-bold text-q4-ink">
-                      {i + 1}
-                    </span>
-                    {p}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </figure>
-        </FadeIn>
-
         {/* Final CTA — the strong visual close */}
-        <FadeIn className="relative mt-14 overflow-hidden rounded-2xl bg-navy px-6 py-14 text-center sm:px-12">
+        <FadeIn className="relative mt-16 overflow-hidden rounded-2xl bg-navy px-6 py-14 text-center sm:px-12">
           <div
             className="pointer-events-none absolute inset-0"
             style={{
