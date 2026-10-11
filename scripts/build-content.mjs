@@ -5,8 +5,8 @@
  * Source, in order of preference:
  *   1. A Google Sheet, when CONTENT_SHEET_ID is set. The sheet must be shared
  *      as "Anyone with the link can view"; each tab is fetched as CSV.
- *   2. CSV exports of each tab in ./content/<Tab name>.csv (the fallback
- *      committed to the repo, so builds work offline and in CI).
+ *   2. The Excel workbook content/aptara-survey-content.xlsx, committed to the
+ *      repo. Edit and save it in Excel; the next build picks it up.
  *
  * Only rows with Status = Approved are published. Pass --include-drafts to
  * also publish "In review" rows, for previewing content locally.
@@ -14,16 +14,19 @@
  * The build stops with a list of problems if anything is missing, too long,
  * or refers to a code that doesn't exist, so a bad edit can't go live.
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import readXlsxFile from 'read-excel-file/node'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const CSV_DIR = path.join(ROOT, 'content')
+const WORKBOOK = path.join(ROOT, 'content', 'aptara-survey-content.xlsx')
 const OUT_FILE = path.join(ROOT, 'src', 'content', 'content.json')
 
 const TABS = ['Settings', 'Questions', 'Answers', 'Sections', 'Result Blocks', 'Rules']
-const RULE_MODES = ['Replace', 'Add before', 'Add after']
+const RULE_MODES = ['Replace', 'Add before', 'Add after', 'Remove']
+const INPUT_TYPES = ['Single', 'Multi']
+const MULTI = 'MULTI'
 const RESULT_ROLES = ['Classification', 'Signal', 'None']
 
 const includeDrafts = process.argv.includes('--include-drafts')
@@ -93,18 +96,35 @@ const FIRST_HEADER = {
   Rules: 'Rule ID',
 }
 
+/** Cell values as the text a reader sees: numbers without ".0", blanks as ''. */
+export function cellText(value) {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  return String(value)
+}
+
+let workbook
+async function loadWorkbook() {
+  workbook ??= readXlsxFile(WORKBOOK).catch((err) => {
+    throw new Error(`Could not read ${path.relative(ROOT, WORKBOOK)}: ${err.message}`)
+  })
+  return workbook
+}
+
 async function loadTab(tab) {
   const sheetId = process.env.CONTENT_SHEET_ID
-  let text
+  let rows
   if (sheetId) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`
     const res = await fetch(url)
     if (!res.ok) throw new Error(`Could not fetch tab "${tab}" from the Google Sheet (HTTP ${res.status}). Is it shared as "Anyone with the link can view"?`)
-    text = await res.text()
+    rows = parseCsv((await res.text()).replace(/^\uFEFF/, ''))
   } else {
-    text = await readFile(path.join(CSV_DIR, `${tab}.csv`), 'utf8')
+    const sheet = (await loadWorkbook()).find((s) => s.sheet === tab)
+    if (!sheet) throw new Error(`The workbook has no "${tab}" tab. Tab names must stay as they are.`)
+    rows = sheet.data.map((row) => row.map(cellText))
   }
-  const records = toRecords(parseCsv(text.replace(/^﻿/, '')), FIRST_HEADER[tab])
+  const records = toRecords(rows, FIRST_HEADER[tab])
   if (!records) throw new Error(`Tab "${tab}" has no "${FIRST_HEADER[tab]}" header row.`)
   return records
 }
@@ -137,6 +157,9 @@ export function buildContent(tabs, { publishable }) {
       supporting_text: r['Helper text (internal)'],
       landing_blurb: r['Landing page blurb'] ?? '',
       result_role: r['Result role'] || 'None',
+      input_type: r['Input type'] || 'Single',
+      step: Number(r.Step || r.Order),
+      step_heading: r['Step heading'] ?? '',
       display_order: Number(r.Order),
       answers: [],
     }))
@@ -148,12 +171,16 @@ export function buildContent(tabs, { publishable }) {
     if (!q.title) problems.push(`Questions: ${q.code} has no question text.`)
     if (!Number.isFinite(q.display_order)) problems.push(`Questions: ${q.code} has no numeric Order.`)
     if (!RESULT_ROLES.includes(q.result_role)) problems.push(`Questions: ${q.code} has unknown Result role "${q.result_role}".`)
+    if (!INPUT_TYPES.includes(q.input_type)) problems.push(`Questions: ${q.code} has unknown Input type "${q.input_type}". Use Single or Multi.`)
+    if (!Number.isFinite(q.step)) problems.push(`Questions: ${q.code} has no numeric Step.`)
     qByCode.set(q.code, q)
   })
   if (questions.length === 0) problems.push('Questions: no approved questions.')
   const classifiers = questions.filter((q) => q.result_role === 'Classification')
   if (classifiers.length !== 1) {
     problems.push(`Questions: exactly one question must have Result role "Classification" (found ${classifiers.length}).`)
+  } else if (classifiers[0].input_type === 'Multi') {
+    problems.push(`Questions: the Classification question ${classifiers[0].code} must be Single choice.`)
   }
 
   // Answers
@@ -166,6 +193,7 @@ export function buildContent(tabs, { publishable }) {
     if (q.answers.some((a) => a.code === r['Answer code'])) {
       problems.push(`Answers: ${q.code} has answer code ${r['Answer code']} twice.`)
     }
+    if (r['Answer code'] === MULTI) problems.push(`Answers: ${q.code} uses the reserved answer code ${MULTI}.`)
     if (!r['Answer text']) problems.push(`Answers: ${q.code}-${r['Answer code']} has no answer text.`)
     if (!r['Category (short label)']) problems.push(`Answers: ${q.code}-${r['Answer code']} has no category.`)
     q.answers.push({
@@ -210,20 +238,29 @@ export function buildContent(tabs, { publishable }) {
       return problems.push(`${label}: section "${s.id}" is written by ${s.owner}, not ${r['Question code']}.`)
     }
     const q = qByCode.get(s.owner)
-    if (q && !q.answers.some((a) => a.code === r['Answer code'])) {
+    const isMultiBlock = r['Answer code'] === MULTI
+    if (q && isMultiBlock && q.input_type !== 'Multi') {
+      return problems.push(`${label}: ${MULTI} blocks are only for Multi questions, and ${q.code} is Single.`)
+    }
+    if (q && !isMultiBlock && !q.answers.some((a) => a.code === r['Answer code'])) {
       return problems.push(`${label}: answer ${r['Answer code']} doesn't exist.`)
     }
     if (!r.Text) return problems.push(`${label}: approved but the Text is empty.`)
     if (r.Text.length > s.max_chars) problems.push(`${label}: ${r.Text.length} characters, limit is ${s.max_chars}.`)
-    checkPlaceholders(r.Text, label)
+    for (const field of ['Heading', 'Text', 'Why this matters']) checkPlaceholders(r[field] ?? '', label)
     blocks[s.id] ??= {}
     if (blocks[s.id][r['Answer code']]) problems.push(`${label}: there are two approved blocks.`)
-    blocks[s.id][r['Answer code']] = r.Text
+    blocks[s.id][r['Answer code']] = {
+      heading: r.Heading ?? '',
+      text: r.Text,
+      why: r['Why this matters'] ?? '',
+    }
   })
   for (const s of sections.filter((x) => x.required)) {
     const q = qByCode.get(s.owner)
-    for (const a of q?.answers ?? []) {
-      if (!blocks[s.id]?.[a.code]) problems.push(`Result Blocks: no approved "${s.id}" text for ${s.owner}-${a.code}.`)
+    const needed = [...(q?.answers ?? []).map((a) => a.code), ...(q?.input_type === 'Multi' ? [MULTI] : [])]
+    for (const code of needed) {
+      if (!blocks[s.id]?.[code]) problems.push(`Result Blocks: no approved "${s.id}" text for ${s.owner}-${code}.`)
     }
   }
 
@@ -243,17 +280,19 @@ export function buildContent(tabs, { publishable }) {
     const s = sectionById.get(r.Section)
     if (!s) problems.push(`${label}: unknown section "${r.Section}".`)
     if (!RULE_MODES.includes(r.Mode)) problems.push(`${label}: Mode must be one of ${RULE_MODES.join(', ')}.`)
-    if (!r.Text) problems.push(`${label}: approved but the Text is empty.`)
+    if (!r.Text && r.Mode !== 'Remove') problems.push(`${label}: approved but the Text is empty.`)
     else if (s && r.Mode === 'Replace' && r.Text.length > s.max_chars) {
       problems.push(`${label}: ${r.Text.length} characters, limit for "${s.id}" is ${s.max_chars}.`)
     }
-    checkPlaceholders(r.Text ?? '', label)
+    for (const field of ['Heading', 'Text', 'Why this matters']) checkPlaceholders(r[field] ?? '', label)
     rules.push({
       id: r['Rule ID'],
       when: conditions,
       section: r.Section,
       mode: r.Mode,
-      text: r.Text,
+      heading: r.Heading ?? '',
+      text: r.Text ?? '',
+      why: r['Why this matters'] ?? '',
       priority: Number(r.Priority) || 0,
     })
   })

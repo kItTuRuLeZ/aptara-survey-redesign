@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { AnswerCode, Question, QuestionCode } from '../lib/types'
+import type { AnswerValue, Answers, Question, QuestionCode, Step } from '../lib/types'
 import { ProgressSteps } from '../components/ProgressSteps'
 import { QuestionOption } from '../components/QuestionOption'
 import { useReducedMotion } from '../lib/useReducedMotion'
+import { isAnswered, selectedCodes, toggleCode } from '../lib/answers'
 
 interface QuestionScreenProps {
-  questions: Question[]
+  steps: Step[]
   currentIndex: number
-  answers: Partial<Record<QuestionCode, AnswerCode>>
-  onSelect: (question: QuestionCode, answer: AnswerCode) => void
+  answers: Answers
+  /** Sets a question's answer; undefined clears it (e.g. the last checkbox unticked). */
+  onChange: (question: QuestionCode, value: AnswerValue | undefined) => void
   onNext: () => void
   onPrevious: () => void
   onSubmit: () => void
@@ -18,52 +20,75 @@ interface QuestionScreenProps {
 
 const START_OVER_CONFIRM_WINDOW_MS = 3000
 
+function hintFor(step: Step, answers: Answers): { done: boolean; text: string } {
+  const done = step.questions.every((q) => isAnswered(q, answers))
+  if (done) return { done, text: step.questions.length > 1 ? 'Both answered' : 'Answer selected' }
+  if (step.questions.length > 1) return { done, text: 'Answer both questions to continue' }
+  return {
+    done,
+    text: step.questions[0].input_type === 'Multi' ? 'Select at least one to continue' : 'Select one answer to continue',
+  }
+}
+
 export function QuestionScreen({
-  questions,
+  steps,
   currentIndex,
   answers,
-  onSelect,
+  onChange,
   onNext,
   onPrevious,
   onSubmit,
   onStartOver,
 }: QuestionScreenProps) {
-  const question = questions[currentIndex]
-  const selected = answers[question.code]
+  const step = steps[currentIndex]
   const isFirst = currentIndex === 0
-  const isLast = currentIndex === questions.length - 1
+  const isLast = currentIndex === steps.length - 1
   const prefersReducedMotion = useReducedMotion()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [confirmingStartOver, setConfirmingStartOver] = useState(false)
-  const hintId = `${question.code}-continue-hint`
+  const hint = hintFor(step, answers)
+  const hintId = `step-${step.number}-continue-hint`
+  const headingId = `step-${step.number}-heading`
+  const single = step.questions.length === 1 ? step.questions[0] : null
 
-  // Move focus to the new question and reset scroll on every navigation —
-  // prevents focus loss and disorienting scroll position when advancing.
+  function choose(question: Question, code: string) {
+    if (question.input_type === 'Multi') onChange(question.code, toggleCode(question, answers[question.code], code))
+    else onChange(question.code, code)
+  }
+
+  // Move focus to the new step's heading and reset scroll on every
+  // navigation — prevents focus loss and disorienting scroll position.
   useEffect(() => {
     headingRef.current?.focus()
     window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
     setConfirmingStartOver(false)
-    // Only question changes should trigger this, not motion preference changes.
+    // Only step changes should trigger this, not motion preference changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      const letterIndex = 'ABCDE'.indexOf(e.key.toUpperCase())
-      const numberIndex = '12345'.indexOf(e.key)
-      const index = letterIndex !== -1 ? letterIndex : numberIndex
-      if (index !== -1 && index < question.answers.length) {
-        onSelect(question.code, question.answers[index].code)
-        return
+      // Leave keys alone while a button, link or text field has focus.
+      const target = e.target as HTMLElement | null
+      if (target?.closest('button, a, textarea, input[type="text"], input[type="email"]')) return
+      // Letter/number shortcuts only where there's a single question on screen.
+      if (single) {
+        const letterIndex = 'ABCDE'.indexOf(e.key.toUpperCase())
+        const numberIndex = '12345'.indexOf(e.key)
+        const index = letterIndex !== -1 ? letterIndex : numberIndex
+        if (index !== -1 && index < single.answers.length && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          choose(single, single.answers[index].code)
+          return
+        }
       }
-      if (e.key === 'Enter' && selected) {
+      if (e.key === 'Enter' && hint.done) {
         if (isLast) onSubmit()
         else onNext()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [question, selected, isLast, onSelect, onNext, onSubmit])
+  })
 
   function handleStartOverClick() {
     if (confirmingStartOver) {
@@ -79,18 +104,19 @@ export function QuestionScreen({
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           <ProgressSteps
-            questions={questions}
-            currentCode={question.code}
+            total={steps.length}
             currentIndex={currentIndex}
+            name={step.name}
+            accentCode={step.questions[0].code}
           />
         </div>
         <motion.button
           layout={!prefersReducedMotion}
           type="button"
           onClick={handleStartOverClick}
-          className={`btn shrink-0 gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs ${
+          className={`btn min-h-11 shrink-0 gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs ${
             confirmingStartOver
-              ? 'bg-q3-tint text-q3 hover:bg-q3-tint'
+              ? 'bg-q3-tint text-q3-ink hover:bg-q3-tint'
               : 'text-slate-600 hover:bg-slate-100 hover:text-navy'
           }`}
         >
@@ -110,40 +136,60 @@ export function QuestionScreen({
               strokeLinejoin="round"
             />
           </motion.svg>
-          {confirmingStartOver ? 'Click again to confirm' : 'Start Over'}
+          {confirmingStartOver ? 'Click again to confirm' : 'Start over'}
         </motion.button>
       </div>
 
       <motion.div
-        key={question.code}
+        key={step.number}
         initial={prefersReducedMotion ? false : { opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
         className="mt-6"
       >
         <h1
+          id={headingId}
           ref={headingRef}
           tabIndex={-1}
           className="text-2xl font-semibold tracking-tight text-navy outline-none sm:text-3xl"
         >
-          {question.title}
+          {step.heading}
         </h1>
 
-        <div
-          role="radiogroup"
-          aria-label={question.title}
-          className="mt-5 flex flex-col gap-2.5"
-        >
-          {question.answers.map((answer) => (
-            <QuestionOption
-              key={answer.code}
-              questionCode={question.code}
-              answer={answer}
-              selected={selected === answer.code}
-              onSelect={(code) => onSelect(question.code, code)}
-            />
-          ))}
-        </div>
+        {step.questions.map((question) => {
+          const multi = question.input_type === 'Multi'
+          const helpId = `${question.code}-help`
+          const codes = selectedCodes(answers[question.code])
+          return (
+            <fieldset
+              key={question.code}
+              aria-labelledby={single ? headingId : undefined}
+              aria-describedby={multi ? helpId : undefined}
+              className="mt-5 border-0 p-0"
+            >
+              {!single && (
+                <legend className="mt-3 text-lg font-semibold text-navy">{question.title}</legend>
+              )}
+              {multi && (
+                <p id={helpId} className="mt-1 text-base text-slate-600">
+                  Select all that apply.
+                </p>
+              )}
+              <div className="mt-3 flex flex-col gap-2.5">
+                {question.answers.map((answer) => (
+                  <QuestionOption
+                    key={answer.code}
+                    questionCode={question.code}
+                    answer={answer}
+                    type={multi ? 'checkbox' : 'radio'}
+                    selected={codes.includes(answer.code)}
+                    onSelect={(code) => choose(question, code)}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )
+        })}
       </motion.div>
 
       {/* Sticky at the bottom of the screen on every size (above the safe
@@ -155,27 +201,27 @@ export function QuestionScreen({
             type="button"
             onClick={onPrevious}
             disabled={isFirst}
-            className="btn-secondary whitespace-nowrap px-4 sm:px-7"
+            className="btn-secondary min-h-11 whitespace-nowrap px-4 sm:px-7"
           >
             &larr; Previous
           </button>
           <button
             type="button"
             onClick={isLast ? onSubmit : onNext}
-            disabled={!selected}
+            disabled={!hint.done}
             aria-describedby={hintId}
-            className="btn-primary whitespace-nowrap px-5 sm:px-7"
+            className="btn-primary min-h-11 whitespace-nowrap px-5 sm:px-7"
           >
-            {isLast ? 'Submit Assessment' : 'Continue'}
+            {isLast ? 'See my result' : 'Continue'}
           </button>
         </div>
         <p
           id={hintId}
           className={`mt-1.5 flex items-center justify-end gap-1.5 text-right text-sm font-medium ${
-            selected ? 'text-q4-ink' : 'text-slate-600'
+            hint.done ? 'text-q4-ink' : 'text-slate-600'
           }`}
         >
-          {selected && (
+          {hint.done && (
             <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
               <path
                 d="m5 12 4 4L19 6"
@@ -186,7 +232,7 @@ export function QuestionScreen({
               />
             </svg>
           )}
-          {selected ? 'Answer selected' : 'Select one answer to continue'}
+          {hint.text}
         </p>
       </div>
     </div>

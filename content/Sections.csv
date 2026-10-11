@@ -1,9 +1,0 @@
-The parts of the result page. 'Written by question' decides whose answers supply the text in Result Blocks.,,,,,,
-Section,Label on result page,Written by question,Max characters,Required,Shown as,Writing guidance
-title,Report title,Q1,60,Yes,Page heading,"3 to 6 words. A positive, specific headline for where they are, e.g. 'Building Foundations for Scale'."
-situation,Current situation,Q1,280,Yes,Lead paragraph,One or two sentences acknowledging where their function is today. Speak to them as 'you'.
-strengths,A strength working in your favor,Q3,240,Yes,Highlighted sentence,"What their current delivery approach already does well. Genuine, not flattery."
-gap,Close the gap,Q2,280,Yes,Priority card,"The core gap behind their biggest challenge. Concrete, no product pitch."
-risk,Reduce the risk,Q4,280,Yes,Priority card,The business risk their team capacity creates if nothing changes.
-next30,Next 30 days,Q2,240,Yes,Action panel,One practical action they can start this month themselves.
-next90,Next 90 days,Q5,280,Yes,Action panel,The strategic direction toward their 12-month goal; the natural opening for a discovery call.

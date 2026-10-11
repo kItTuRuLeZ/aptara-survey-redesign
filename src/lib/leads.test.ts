@@ -3,7 +3,7 @@ import { buildLeadPayload, isLeadCaptureEnabled, submitLead } from './leads'
 import { content } from '../content'
 import { composeResult } from './composeResult'
 
-const answers = { Q1: 'C', Q2: 'C', Q3: 'C', Q4: 'B', Q5: 'C' }
+const answers = { Q1: 'C', Q2: 'C', Q3: ['A', 'C', 'D'], Q4: 'B', Q5: 'B', Q6: 'E' }
 const contact = { name: ' Priya ', email: 'priya@example.com', company: 'Example Co', message: '' }
 const URL = 'https://example.com/lead'
 
@@ -28,7 +28,15 @@ describe('leads', () => {
     expect(p.Message).toBe('(none)')
     expect(p._subject).toBe('L&D assessment follow-up: Example Co')
     expect(p._replyto).toBe('priya@example.com')
-    expect(p['Maturity Stage']).toMatch(/^Scaling: /)
+    expect(p['Maturity stage']).toMatch(/^Established: /)
+    expect(p['Maturity stage (self-reported)']).toBe('Established')
+    // Every selected delivery method, plus team size, sourcing and goal.
+    expect(p['Delivery methods']).toBe(
+      'In-person ILT: In-person instructor-led training (ILT). | Self-paced eLearning: Self-paced eLearning. | Microlearning: Microlearning or performance support, such as short videos and job aids.',
+    )
+    expect(p['Internal team']).toMatch(/^Small team/)
+    expect(p.Sourcing).toMatch(/^Mixed/)
+    expect(p['Business goal']).toMatch(/^Business impact/)
     expect(p['Result title']).toBe(composeResult(content, answers).title)
   })
 

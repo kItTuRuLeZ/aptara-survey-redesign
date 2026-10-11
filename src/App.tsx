@@ -12,9 +12,10 @@ import {
   savePersistedState,
   PERSISTENCE_SCHEMA_VERSION,
 } from './lib/persistence'
-import type { AnswerCode, Answers, AssessmentResult, Question, QuestionCode } from './lib/types'
+import type { AnswerValue, Answers, AssessmentResult, Question, QuestionCode } from './lib/types'
 import { content } from './content'
 import { composeResult } from './lib/composeResult'
+import { groupSteps, isValidValue } from './lib/answers'
 
 type Screen = 'landing' | 'question' | 'processing' | 'results'
 
@@ -28,6 +29,8 @@ function App() {
   const [submitError, setSubmitError] = useState('')
   const [isNavigating, setIsNavigating] = useState(false)
 
+  const steps = useMemo(() => groupSteps(questions), [questions])
+
   const mockKey = useMemo(
     () => new URLSearchParams(window.location.search).get('mock'),
     [],
@@ -39,37 +42,47 @@ function App() {
       .catch(() => setQuestionsError('Unable to load assessment questions.'))
   }, [])
 
-  // Resume an in-progress assessment (answers + position) after a refresh
-  // or a closed/reopened tab, once the question set has loaded.
+  // After a refresh in the same tab, return to the question or the result
+  // the visitor was on. A result is recomposed from the validated answers,
+  // never read back from storage.
   useEffect(() => {
     if (mockKey || questions.length === 0) return
     const saved = loadPersistedState(questions)
     if (!saved || Object.keys(saved.answers).length === 0) return
     setAnswers(saved.answers)
     setCurrentIndex(saved.currentIndex)
-    setScreen('question')
+    if (saved.view === 'results') {
+      setResult(composeResult(content, saved.answers))
+      setScreen('results')
+    } else {
+      setScreen('question')
+    }
   }, [mockKey, questions])
 
-  // Persist answers/position while the assessment is in progress.
+  // Persist answers, position and view while on a question or the result.
   useEffect(() => {
-    if (screen !== 'question') return
+    if (mockKey) return
+    if (screen !== 'question' && screen !== 'results') return
     savePersistedState({
       version: PERSISTENCE_SCHEMA_VERSION,
+      view: screen,
       currentIndex,
       answers,
     })
-  }, [screen, currentIndex, answers])
+  }, [mockKey, screen, currentIndex, answers])
 
-  // Shortcut: ?mock=A-B-B-A-A jumps straight to the result for those answers
-  // (one code per question, in order), for reviewing result content quickly.
+  // Shortcut: ?mock=A-B-A+C-B-B-A jumps straight to the result for those
+  // answers (one entry per question, in order; join several selections of a
+  // select-all question with +), for reviewing result content quickly.
   useEffect(() => {
     if (!mockKey || questions.length === 0) return
-    const codes = mockKey.split('-')
-    if (codes.length !== questions.length) return
+    const entries = mockKey.split('-')
+    if (entries.length !== questions.length) return
     const mockAnswers: Answers = {}
     for (const [i, q] of questions.entries()) {
-      if (!q.answers.some((a) => a.code === codes[i])) return
-      mockAnswers[q.code] = codes[i]
+      const value = q.input_type === 'Multi' ? entries[i].split('+') : entries[i]
+      if (!isValidValue(q, value)) return
+      mockAnswers[q.code] = value
     }
     setAnswers(mockAnswers)
     setResult(composeResult(content, mockAnswers))
@@ -80,13 +93,18 @@ function App() {
     if (questions.length > 0) setScreen('question')
   }
 
-  function handleSelect(question: QuestionCode, answer: AnswerCode) {
-    setAnswers((prev) => ({ ...prev, [question]: answer }))
+  function handleChange(question: QuestionCode, value: AnswerValue | undefined) {
+    setAnswers((prev) => {
+      const next = { ...prev }
+      if (value === undefined) delete next[question]
+      else next[question] = value
+      return next
+    })
   }
 
   function handleNext() {
     if (isNavigating) return
-    setCurrentIndex((i) => Math.min(i + 1, questions.length - 1))
+    setCurrentIndex((i) => Math.min(i + 1, steps.length - 1))
   }
 
   function handlePrevious() {
@@ -113,7 +131,6 @@ function App() {
     if (res) {
       setResult(res)
       setScreen('results')
-      clearPersistedState()
     }
   }
 
@@ -142,13 +159,13 @@ function App() {
           <LandingScreen onStart={handleStart} />
         )}
 
-        {!questionsError && screen === 'question' && questions.length > 0 && (
+        {!questionsError && screen === 'question' && steps.length > 0 && (
           <>
             <QuestionScreen
-              questions={questions}
+              steps={steps}
               currentIndex={currentIndex}
               answers={answers}
-              onSelect={handleSelect}
+              onChange={handleChange}
               onNext={handleNext}
               onPrevious={handlePrevious}
               onSubmit={handleSubmit}

@@ -10,11 +10,3 @@ export const content = raw as SurveyContent
 export function setting(key: string, fallback = ''): string {
   return content.settings[key] || fallback
 }
-
-const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
-
-/** "five", "six" ... for prose; digits beyond ten. */
-export function questionCountWord(): string {
-  const n = content.questions.length
-  return NUMBER_WORDS[n] ?? String(n)
-}

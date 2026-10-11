@@ -12,6 +12,9 @@ type Status = 'idle' | 'submitting' | 'sent' | 'failed'
 
 const EMPTY: LeadContact = { name: '', email: '', company: '', message: '' }
 
+// Only a real URL from the content sheet is ever linked; there is no default.
+const privacyUrl = setting('privacy_policy_url')
+
 /**
  * Optional follow-up request, shown only after the full result. Validates
  * inline, keeps what was typed if sending fails, and never blocks the result.
@@ -67,11 +70,13 @@ export function LeadForm({ onSubmit }: LeadFormProps) {
     return (
       <div>
         <label htmlFor={`lead-${id}`} className="block text-sm font-semibold text-navy">
-          {label}
+          {label} <span className="font-normal text-slate-600">(required)</span>
         </label>
         <input
           id={`lead-${id}`}
           type={type}
+          required
+          aria-required="true"
           autoComplete={autoComplete}
           value={contact[id]}
           onChange={(e) => update(id, e.target.value)}
@@ -100,13 +105,15 @@ export function LeadForm({ onSubmit }: LeadFormProps) {
         )}
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <p className="mt-3 text-sm text-slate-600">All fields are required unless marked optional.</p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {field('name', 'Name', 'text', 'name')}
         {field('email', 'Work email', 'email', 'email')}
         <div className="sm:col-span-2">{field('company', 'Company', 'text', 'organization')}</div>
         <div className="sm:col-span-2">
           <label htmlFor="lead-message" className="block text-sm font-semibold text-navy">
-            Anything we should know? <span className="font-normal text-slate-500">(optional)</span>
+            Anything we should know? <span className="font-normal text-slate-600">(optional)</span>
           </label>
           <textarea
             id="lead-message"
@@ -136,9 +143,25 @@ export function LeadForm({ onSubmit }: LeadFormProps) {
             {setting(
               'lead_form_privacy',
               "We'll send your details and your assessment answers to Aptara's team, only to follow up on this request.",
-            )}
+            )}{' '}
+            <span className="font-normal text-slate-600">(required)</span>
           </span>
         </label>
+        {privacyUrl && (
+          <p className="mt-1 pl-7 text-sm text-slate-600">
+            See Aptara&apos;s{' '}
+            <a
+              href={privacyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-navy-light underline underline-offset-2 hover:text-navy"
+            >
+              privacy and cookie policy
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+            .
+          </p>
+        )}
         {errors.consent && (
           <p id="lead-consent-error" className="mt-1 pl-7 text-sm text-q3">
             {errors.consent}
@@ -152,7 +175,12 @@ export function LeadForm({ onSubmit }: LeadFormProps) {
         </p>
       )}
 
-      <button type="submit" disabled={status === 'submitting'} className="btn-primary mt-5">
+      <button
+        type="submit"
+        disabled={status === 'submitting'}
+        aria-busy={status === 'submitting' || undefined}
+        className="btn-primary mt-5"
+      >
         {status === 'submitting' ? 'Sending…' : 'Send request'}
       </button>
     </form>

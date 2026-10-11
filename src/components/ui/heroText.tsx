@@ -1,20 +1,21 @@
 import type { ReactNode } from 'react'
 
-const NO_WRAP_PHRASE = 'L&D function'
+const NO_WRAP_PHRASE = /L&D (function|priority)/
 
 /**
- * Keeps "L&D function" from splitting across a line wrap at narrow
- * viewport widths — used by both the 3D hero and its static fallback.
+ * Keeps "L&D function" and "L&D priority" from splitting across a line wrap
+ * at narrow viewport widths.
  */
 export function renderHeroLine(text: string): ReactNode {
-  const idx = text.indexOf(NO_WRAP_PHRASE)
-  if (idx === -1) return text
+  const match = text.match(NO_WRAP_PHRASE)
+  if (!match || match.index === undefined) return text
+  const idx = match.index
 
   return (
     <>
       {text.slice(0, idx)}
-      <span className="whitespace-nowrap">{NO_WRAP_PHRASE}</span>
-      {text.slice(idx + NO_WRAP_PHRASE.length)}
+      <span className="whitespace-nowrap">{match[0]}</span>
+      {text.slice(idx + match[0].length)}
     </>
   )
 }

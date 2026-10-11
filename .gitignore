@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated from content/aptara-survey-content.xlsx by npm run content
+src/content/content.json
+# Excel's lock file while the workbook is open
+content/~$*

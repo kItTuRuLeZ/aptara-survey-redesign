@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { LeadForm } from './LeadForm'
 
 async function fillValid(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Name'), 'Priya Shah')
-  await user.type(screen.getByLabelText('Work email'), 'priya@example.com')
-  await user.type(screen.getByLabelText('Company'), 'Example Co')
+  await user.type(screen.getByLabelText(/^Name/), 'Priya Shah')
+  await user.type(screen.getByLabelText(/^Work email/), 'priya@example.com')
+  await user.type(screen.getByLabelText(/^Company/), 'Example Co')
   await user.click(screen.getByRole('checkbox'))
 }
 
@@ -21,16 +21,16 @@ describe('LeadForm', () => {
     expect(onSubmit).not.toHaveBeenCalled()
     expect(screen.getByText('Enter your name.')).toBeInTheDocument()
     expect(screen.getByText('Please confirm you agree so we can follow up.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByLabelText('Name')).toHaveFocus()
+    expect(screen.getByLabelText(/^Name/)).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText(/^Name/)).toHaveFocus()
   })
 
   it('rejects a malformed email', async () => {
     const user = userEvent.setup()
     render(<LeadForm onSubmit={vi.fn()} />)
     await fillValid(user)
-    await user.clear(screen.getByLabelText('Work email'))
-    await user.type(screen.getByLabelText('Work email'), 'not-an-email')
+    await user.clear(screen.getByLabelText(/^Work email/))
+    await user.type(screen.getByLabelText(/^Work email/), 'not-an-email')
     await user.click(screen.getByRole('button', { name: 'Send request' }))
     expect(screen.getByText(/Enter a valid email/)).toBeInTheDocument()
   })
@@ -59,7 +59,7 @@ describe('LeadForm', () => {
     await user.click(screen.getByRole('button', { name: 'Send request' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent("couldn't send")
-    expect(screen.getByLabelText('Name')).toHaveValue('Priya Shah')
+    expect(screen.getByLabelText(/^Name/)).toHaveValue('Priya Shah')
     expect(screen.getByRole('button', { name: 'Send request' })).toBeEnabled()
   })
 })

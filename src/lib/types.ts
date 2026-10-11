@@ -2,9 +2,12 @@
 // questions (Q1, Q2 ... Q6) and answers (A, B ... F) are allowed.
 export type QuestionCode = string
 export type AnswerCode = string
-export type Answers = Partial<Record<QuestionCode, AnswerCode>>
+/** One code for a Single question; a non-empty list for a Multi question. */
+export type AnswerValue = AnswerCode | AnswerCode[]
+export type Answers = Partial<Record<QuestionCode, AnswerValue>>
 
 export type ResultRole = 'Classification' | 'Signal' | 'None'
+export type InputType = 'Single' | 'Multi'
 
 export interface QuestionAnswer {
   code: AnswerCode
@@ -20,8 +23,21 @@ export interface Question {
   supporting_text: string
   landing_blurb: string
   result_role: ResultRole
+  input_type: InputType
+  /** Questions sharing a step number appear together on one screen. */
+  step: number
+  /** Heading for a screen with more than one question. */
+  step_heading: string
   display_order: number
   answers: QuestionAnswer[]
+}
+
+/** One screen of the assessment: one or more questions. */
+export interface Step {
+  number: number
+  heading: string
+  name: string
+  questions: Question[]
 }
 
 export interface QuestionsResponse {
@@ -35,12 +51,21 @@ export interface ContentSection {
   required: boolean
 }
 
+export interface ContentBlock {
+  heading: string
+  text: string
+  why: string
+}
+
 export interface ContentRule {
   id: string
+  /** For a Multi question, a condition matches when the answer is among the selections. */
   when: Array<{ question: QuestionCode; answer: AnswerCode }>
   section: string
-  mode: 'Replace' | 'Add before' | 'Add after'
+  mode: 'Replace' | 'Add before' | 'Add after' | 'Remove'
+  heading: string
   text: string
+  why: string
   priority: number
 }
 
@@ -51,7 +76,8 @@ export interface SurveyContent {
   settings: Record<string, string>
   questions: Question[]
   sections: ContentSection[]
-  blocks: Record<string, Record<AnswerCode, string>>
+  /** blocks[section][answerCode]; a Multi question also has a MULTI block. */
+  blocks: Record<string, Record<AnswerCode, ContentBlock>>
   rules: ContentRule[]
 }
 
@@ -64,7 +90,9 @@ export interface ResultSignal {
 export interface ResultSection {
   id: string
   label: string
+  heading: string
   text: string
+  why: string
 }
 
 /** A person's result, assembled from the content blocks and rules. */

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { HERO_CHAPTERS, HERO_STATS } from './heroContent'
+import { HERO_COPY, HERO_STATS } from './heroContent'
 import { renderHeroLine } from './heroText'
 
 interface HeroCopyProps {
@@ -7,8 +7,6 @@ interface HeroCopyProps {
   /** Play the entrance animation. Off for reduced motion. */
   animate: boolean
 }
-
-const [chapter] = HERO_CHAPTERS
 
 /**
  * The hero's text and buttons. Rendered once, in front of whichever
@@ -51,7 +49,7 @@ export function HeroCopy({ onStart, animate }: HeroCopyProps) {
         >
           <span className="h-1.5 w-1.5 rounded-full bg-[#12859B]" aria-hidden="true" />
           <span className="text-sm font-medium tracking-wide text-white/90">
-            L&amp;D Assessment
+            {HERO_COPY.label}
           </span>
         </motion.div>
 
@@ -69,23 +67,18 @@ export function HeroCopy({ onStart, animate }: HeroCopyProps) {
               filter: 'url(#text-glow)',
             }}
           >
-            Understand your
+            {HERO_COPY.lead}
           </span>
-          <span className="block">{renderHeroLine('L&D function.')}</span>
-          <span className="block font-light italic text-white/80">Find your direction.</span>
+          <span className="block">{renderHeroLine(HERO_COPY.main)}</span>
         </motion.h1>
 
-        <motion.div className="mt-7 max-w-xl" {...enter(0.7)}>
-          {chapter.lines.map((line) => (
-            <p key={line} className="text-lg leading-8 text-white/70">
-              {renderHeroLine(line)}
-            </p>
-          ))}
-        </motion.div>
+        <motion.p className="mt-7 max-w-xl text-lg leading-8 text-white/75" {...enter(0.7)}>
+          {renderHeroLine(HERO_COPY.subtext)}
+        </motion.p>
 
         <motion.div className="mt-9 flex flex-wrap items-center gap-4" {...enter(0.9)}>
           <button type="button" onClick={onStart} className="btn-on-dark-primary">
-            Get Started
+            {HERO_COPY.start}
           </button>
           <a href="#discover" className="btn-on-dark-secondary">
             See how it works
