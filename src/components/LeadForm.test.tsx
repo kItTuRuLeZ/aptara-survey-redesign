@@ -62,4 +62,30 @@ describe('LeadForm', () => {
     expect(screen.getByLabelText(/^Name/)).toHaveValue('Priya Shah')
     expect(screen.getByRole('button', { name: 'Send request' })).toBeEnabled()
   })
+
+  it('requires consent before sending', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(<LeadForm onSubmit={onSubmit} />)
+    await fillValid(user)
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: 'Send request' }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText('Please confirm you agree so we can follow up.')).toBeInTheDocument()
+  })
+
+  it('shows a pending state and sends only once while a request is in flight', async () => {
+    const user = userEvent.setup()
+    let finish: () => void = () => {}
+    const onSubmit = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)))
+    render(<LeadForm onSubmit={onSubmit} />)
+    await fillValid(user)
+    await user.click(screen.getByRole('button', { name: 'Send request' }))
+    const pending = screen.getByRole('button', { name: /Sending/ })
+    expect(pending).toBeDisabled()
+    await user.click(pending)
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    finish()
+    expect(await screen.findByRole('status')).toHaveTextContent('Thanks, Priya')
+  })
 })

@@ -92,6 +92,23 @@ describe('buildContent', () => {
     )
   })
 
+  it('carries Action tags and merge notes, and rejects a badly written Action', () => {
+    const tabs = baseTabs()
+    tabs.Sections[0]['Merge note'] = 'Also fits {Q2}.'
+    tabs['Result Blocks'][0].Action = 'intake-prioritization'
+    const { problems, content } = buildContent(tabs, APPROVED)
+    expect(problems).toEqual([])
+    expect(content.blocks.title.A.action).toBe('intake-prioritization')
+    expect(content.blocks.title.B).not.toHaveProperty('action')
+    expect(content.sections[0].merge_note).toBe('Also fits {Q2}.')
+
+    tabs['Result Blocks'][1].Action = 'Intake Prioritization'
+    tabs.Sections[0]['Merge note'] = 'Also fits {Q9}.'
+    const bad = buildContent(tabs, APPROVED).problems.join('\n')
+    expect(bad).toMatch(/Action "Intake Prioritization"/)
+    expect(bad).toMatch(/merge note: placeholder \{Q9\}/)
+  })
+
   it('accepts a Remove rule with no text', () => {
     const tabs = baseTabs()
     tabs.Rules = [{ 'Rule ID': 'R1', 'When (all must match)': 'Q1=A AND Q2=B', Section: 'title', Mode: 'Remove', Text: '', Priority: '', Status: 'Approved' }]

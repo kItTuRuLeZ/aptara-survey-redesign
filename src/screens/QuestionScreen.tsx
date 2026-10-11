@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { AnswerValue, Answers, Question, QuestionCode, Step } from '../lib/types'
 import { ProgressSteps } from '../components/ProgressSteps'
 import { QuestionOption } from '../components/QuestionOption'
+import { StartOverButton } from '../components/StartOverButton'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { isAnswered, selectedCodes, toggleCode } from '../lib/answers'
 
@@ -17,8 +18,6 @@ interface QuestionScreenProps {
   onSubmit: () => void
   onStartOver: () => void
 }
-
-const START_OVER_CONFIRM_WINDOW_MS = 3000
 
 function hintFor(step: Step, answers: Answers): { done: boolean; text: string } {
   const done = step.questions.every((q) => isAnswered(q, answers))
@@ -45,7 +44,6 @@ export function QuestionScreen({
   const isLast = currentIndex === steps.length - 1
   const prefersReducedMotion = useReducedMotion()
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const [confirmingStartOver, setConfirmingStartOver] = useState(false)
   const hint = hintFor(step, answers)
   const hintId = `step-${step.number}-continue-hint`
   const headingId = `step-${step.number}-heading`
@@ -61,15 +59,15 @@ export function QuestionScreen({
   useEffect(() => {
     headingRef.current?.focus()
     window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
-    setConfirmingStartOver(false)
     // Only step changes should trigger this, not motion preference changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      // Leave keys alone while a button, link or text field has focus.
+      // Leave keys alone while a button, link or text field has focus, or a dialog is open.
       const target = e.target as HTMLElement | null
+      if (document.querySelector('dialog[open]')) return
       if (target?.closest('button, a, textarea, input[type="text"], input[type="email"]')) return
       // Letter/number shortcuts only where there's a single question on screen.
       if (single) {
@@ -90,15 +88,6 @@ export function QuestionScreen({
     return () => window.removeEventListener('keydown', handleKey)
   })
 
-  function handleStartOverClick() {
-    if (confirmingStartOver) {
-      onStartOver()
-      return
-    }
-    setConfirmingStartOver(true)
-    setTimeout(() => setConfirmingStartOver(false), START_OVER_CONFIRM_WINDOW_MS)
-  }
-
   return (
     <div className="mx-auto max-w-2xl px-5 pt-6 sm:px-7 sm:pt-8">
       <div className="flex items-start justify-between gap-6">
@@ -110,24 +99,12 @@ export function QuestionScreen({
             accentCode={step.questions[0].code}
           />
         </div>
-        <motion.button
-          layout={!prefersReducedMotion}
-          type="button"
-          onClick={handleStartOverClick}
-          className={`btn min-h-11 shrink-0 gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs ${
-            confirmingStartOver
-              ? 'bg-q3-tint text-q3-ink hover:bg-q3-tint'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-navy'
-          }`}
+        <StartOverButton
+          hasProgress={Object.keys(answers).length > 0}
+          onConfirm={onStartOver}
+          className="btn min-h-11 shrink-0 gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:text-navy"
         >
-          <motion.svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-3.5 w-3.5 shrink-0"
-            aria-hidden="true"
-            animate={{ rotate: confirmingStartOver ? -75 : 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.35, ease: 'easeOut' }}
-          >
+          <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
             <path
               d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"
               stroke="currentColor"
@@ -135,9 +112,9 @@ export function QuestionScreen({
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-          </motion.svg>
-          {confirmingStartOver ? 'Click again to confirm' : 'Start over'}
-        </motion.button>
+          </svg>
+          Start over
+        </StartOverButton>
       </div>
 
       <motion.div

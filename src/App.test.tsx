@@ -159,17 +159,82 @@ describe('assessment flow', () => {
     expect(screen.queryByRole('heading', { name: /top priorities/i })).not.toBeInTheDocument()
   })
 
-  it('Start over clears answers, the result and saved state', async () => {
+  it('restores a saved step on the first render, without showing the landing page', () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 2, view: 'question', currentIndex: 2, answers: { Q1: 'A', Q2: 'B', Q3: ['D'] } }),
+    )
+    render(<App />)
+    expect(screen.queryByRole('button', { name: /start the assessment/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Microlearning/ })).toBeChecked()
+  })
+
+  it('restores a saved result on the first render, without showing the landing page', () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 2, view: 'results', currentIndex: 4, answers: { Q1: 'B', Q2: 'A', Q3: ['C'], Q4: 'B', Q5: 'B', Q6: 'C' } }),
+    )
+    render(<App />)
+    expect(screen.queryByRole('button', { name: /start the assessment/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /modernize priority content/i })).toBeInTheDocument()
+  })
+
+  it('asks before Start over clears a result; Keep my answers and Escape change nothing', async () => {
     const user = userEvent.setup()
     await start(user)
     await answerAll(user)
     await screen.findByRole('heading', { name: /top priorities/i })
-    await user.click(screen.getByRole('button', { name: /start over/i }))
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    const trigger = screen.getByRole('button', { name: /^start over$/i })
+
+    await user.click(trigger)
+    const dialog = screen.getByRole('dialog', { name: 'Start a new assessment?' })
+    expect(within(dialog).getByText('This will clear your current answers and result.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Keep my answers' })).toHaveFocus()
+    await user.click(within(dialog).getByRole('button', { name: 'Keep my answers' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+    expect(screen.getByRole('heading', { name: /top priorities/i })).toBeInTheDocument()
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBe(saved)
+
+    await user.click(trigger)
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /top priorities/i })).toBeInTheDocument()
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBe(saved)
+  })
+
+  it('Start over, once confirmed, clears answers, the result and saved state for good', async () => {
+    const user = userEvent.setup()
+    await start(user)
+    await answerAll(user)
+    await screen.findByRole('heading', { name: /top priorities/i })
+    await user.click(screen.getByRole('button', { name: /^start over$/i }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start over' }))
     expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
 
+    // A refresh doesn't bring the old result back.
+    document.body.innerHTML = ''
+    render(<App />)
+    expect(screen.queryByRole('heading', { name: /top priorities/i })).not.toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: /start the assessment/i })[0])
     expect(screen.getByRole('radio', { name: /Developing/ })).not.toBeChecked()
     expect(continueButton()).toBeDisabled()
+  })
+
+  it('asks before Start over on a step with answers, but not on an untouched first step', async () => {
+    const user = userEvent.setup()
+    await start(user)
+    await user.click(screen.getByRole('button', { name: /start over/i }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /start the assessment/i })).not.toHaveLength(0)
+
+    await user.click(screen.getAllByRole('button', { name: /start the assessment/i })[0])
+    await user.click(screen.getByRole('radio', { name: /Foundational/ }))
+    await user.click(screen.getByRole('button', { name: /start over/i }))
+    expect(screen.getByRole('dialog', { name: 'Start a new assessment?' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Keep my answers' }))
+    expect(screen.getByRole('radio', { name: /Foundational/ })).toBeChecked()
   })
 
   it('does not claim success when the clipboard is blocked, and offers the text to copy by hand', async () => {

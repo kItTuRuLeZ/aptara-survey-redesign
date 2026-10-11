@@ -5,7 +5,7 @@ import { LandingScreen } from './screens/LandingScreen'
 import { QuestionScreen } from './screens/QuestionScreen'
 import { ProcessingScreen } from './screens/ProcessingScreen'
 import { ResultsScreen } from './screens/ResultsScreen'
-import { getQuestions, submitAssessment } from './lib/localAssessment'
+import { submitAssessment } from './lib/localAssessment'
 import {
   clearPersistedState,
   loadPersistedState,
@@ -19,45 +19,71 @@ import { groupSteps, isValidValue } from './lib/answers'
 
 type Screen = 'landing' | 'question' | 'processing' | 'results'
 
+// Questions ship with the page, so the first render can already show the
+// right screen; there is nothing to load.
+const QUESTIONS: Question[] = content.questions
+
+interface InitialState {
+  screen: Screen
+  currentIndex: number
+  answers: Answers
+  result: AssessmentResult | null
+}
+
+/**
+ * Shortcut: ?mock=A-B-A+C-B-B-A opens the result for those answers (one
+ * entry per question, in order; join several selections of a select-all
+ * question with +), for reviewing result content quickly.
+ */
+function mockAnswers(mockKey: string): Answers | null {
+  const entries = mockKey.split('-')
+  if (entries.length !== QUESTIONS.length) return null
+  const answers: Answers = {}
+  for (const [i, q] of QUESTIONS.entries()) {
+    const value = q.input_type === 'Multi' ? entries[i].split('+') : entries[i]
+    if (!isValidValue(q, value)) return null
+    answers[q.code] = value
+  }
+  return answers
+}
+
+/**
+ * Decides the first screen before anything renders, so a refresh returns
+ * straight to the question or result the visitor was on, with no flash of
+ * the landing page. A result is recomposed from the validated answers, never
+ * read back from storage.
+ */
+function initialState(mockKey: string | null): InitialState {
+  const empty: InitialState = { screen: 'landing', currentIndex: 0, answers: {}, result: null }
+  if (mockKey) {
+    const answers = mockAnswers(mockKey)
+    return answers ? { ...empty, screen: 'results', answers, result: composeResult(content, answers) } : empty
+  }
+  const saved = loadPersistedState(QUESTIONS)
+  if (!saved || Object.keys(saved.answers).length === 0) return empty
+  if (saved.view === 'results') {
+    return {
+      screen: 'results',
+      currentIndex: saved.currentIndex,
+      answers: saved.answers,
+      result: composeResult(content, saved.answers),
+    }
+  }
+  return { ...empty, screen: 'question', currentIndex: saved.currentIndex, answers: saved.answers }
+}
+
 function App() {
-  const [screen, setScreen] = useState<Screen>('landing')
-  const [questions, setQuestions] = useState<Question[]>([])
-  const [questionsError, setQuestionsError] = useState('')
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<Answers>({})
-  const [result, setResult] = useState<AssessmentResult | null>(null)
+  const [mockKey] = useState(() => new URLSearchParams(window.location.search).get('mock'))
+  const [initial] = useState(() => initialState(mockKey))
+  const [screen, setScreen] = useState<Screen>(initial.screen)
+  const questions = QUESTIONS
+  const [currentIndex, setCurrentIndex] = useState(initial.currentIndex)
+  const [answers, setAnswers] = useState<Answers>(initial.answers)
+  const [result, setResult] = useState<AssessmentResult | null>(initial.result)
   const [submitError, setSubmitError] = useState('')
   const [isNavigating, setIsNavigating] = useState(false)
 
   const steps = useMemo(() => groupSteps(questions), [questions])
-
-  const mockKey = useMemo(
-    () => new URLSearchParams(window.location.search).get('mock'),
-    [],
-  )
-
-  useEffect(() => {
-    getQuestions()
-      .then((res) => setQuestions(res.questions))
-      .catch(() => setQuestionsError('Unable to load assessment questions.'))
-  }, [])
-
-  // After a refresh in the same tab, return to the question or the result
-  // the visitor was on. A result is recomposed from the validated answers,
-  // never read back from storage.
-  useEffect(() => {
-    if (mockKey || questions.length === 0) return
-    const saved = loadPersistedState(questions)
-    if (!saved || Object.keys(saved.answers).length === 0) return
-    setAnswers(saved.answers)
-    setCurrentIndex(saved.currentIndex)
-    if (saved.view === 'results') {
-      setResult(composeResult(content, saved.answers))
-      setScreen('results')
-    } else {
-      setScreen('question')
-    }
-  }, [mockKey, questions])
 
   // Persist answers, position and view while on a question or the result.
   useEffect(() => {
@@ -70,24 +96,6 @@ function App() {
       answers,
     })
   }, [mockKey, screen, currentIndex, answers])
-
-  // Shortcut: ?mock=A-B-A+C-B-B-A jumps straight to the result for those
-  // answers (one entry per question, in order; join several selections of a
-  // select-all question with +), for reviewing result content quickly.
-  useEffect(() => {
-    if (!mockKey || questions.length === 0) return
-    const entries = mockKey.split('-')
-    if (entries.length !== questions.length) return
-    const mockAnswers: Answers = {}
-    for (const [i, q] of questions.entries()) {
-      const value = q.input_type === 'Multi' ? entries[i].split('+') : entries[i]
-      if (!isValidValue(q, value)) return
-      mockAnswers[q.code] = value
-    }
-    setAnswers(mockAnswers)
-    setResult(composeResult(content, mockAnswers))
-    setScreen('results')
-  }, [mockKey, questions])
 
   function handleStart() {
     if (questions.length > 0) setScreen('question')
@@ -149,17 +157,11 @@ function App() {
     <div className="flex min-h-screen flex-col">
       <Header compact={screen === 'question' || screen === 'processing'} />
       <main className="flex-1">
-        {questionsError && (
-          <p className="mx-auto mt-10 max-w-md text-center text-sm text-q3">
-            {questionsError}
-          </p>
-        )}
-
-        {!questionsError && screen === 'landing' && (
+        {screen === 'landing' && (
           <LandingScreen onStart={handleStart} />
         )}
 
-        {!questionsError && screen === 'question' && steps.length > 0 && (
+        {screen === 'question' && steps.length > 0 && (
           <>
             <QuestionScreen
               steps={steps}
@@ -179,9 +181,9 @@ function App() {
           </>
         )}
 
-        {!questionsError && screen === 'processing' && <ProcessingScreen />}
+        {screen === 'processing' && <ProcessingScreen />}
 
-        {!questionsError && screen === 'results' && result && (
+        {screen === 'results' && result && (
           <ResultsScreen
             result={result}
             questions={questions}
